@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Display</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script async src="client-new.js"></script>
+</head>
+<body class="bg-gray-900 flex flex-col items-center justify-center h-screen">
+<div class="flex space-x-4">
+    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+        <video class="w-full" width="1920" height="1080" id="video01" autoplay="true" playsinline="true"></video>
+    </div>
+    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+        <video class="w-full" width="1920" height="1080" id="video02" autoplay="true" playsinline="true"></video>
+    </div>
+</div>
+<button id="btnConnectLive"
+        class="bg-blue-500 m-8 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+        onclick="onClickLive()">
+    Connect to Live Stream
+</button>
+</body>
+</html>
