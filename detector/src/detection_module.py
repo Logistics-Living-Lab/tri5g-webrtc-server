@@ -1,9 +1,12 @@
 from typing import Any, Literal
+from pathlib import Path
 
+import os
 import numpy as np
 import numpy.typing as npt
 import torch
 from torch import Tensor, nn
+import yaml
 
 from detector.src.nn.detection_head import YOLOv3Head
 from detector.src.utils.map import get_mAP_arguments
@@ -44,6 +47,30 @@ class DetectionModule(nn.Module):
             scale_output_channels=scale_output_channels,
         )
 
+        self.detector = None
+
+    @staticmethod
+    def load_unet_detector(model_dir_path, config_file_name="cfg.yml"):
+        with open(os.path.join(model_dir_path, config_file_name)) as file:
+            config = yaml.safe_load(file)
+
+        image_preprocessor = ImagePreprocessor(**config["transform"])
+        detector = DetectionModule(
+            image_preprocessor=image_preprocessor,
+            **config["model"],
+        )
+        detector._load_weights_from_checkpoints(model_dir_path, **config["paths"])
+
+        detector.eval()
+        return detector
+
+    def _load_weights_from_checkpoints(self, model_dir_path, backbone: Path, head: Path) -> None:
+        backbone_checkpoint = torch.load(os.path.join(model_dir_path, str(backbone)))
+        self.backbone.load_state_dict(backbone_checkpoint)
+
+        head_checkpoint = torch.load(os.path.join(model_dir_path, str(head)))
+        self.head.load_state_dict(head_checkpoint)
+
     def forward(
             self,
             img: npt.NDArray[np.uint8],
@@ -66,7 +93,7 @@ class DetectionModule(nn.Module):
             anchors=self.head.anchors,
         )
 
-        return _mAP2numpy(map_result)
+        return self._map_to_numpy(map_result)
 
     def _forward_batch(
             self, *args: Any, **kwargs: Any
@@ -86,21 +113,20 @@ class DetectionModule(nn.Module):
         classes = [scale_result[..., 5:] for scale_result in result]
         return bboxes, objectness, classes
 
-
-def _mAP2numpy(
-        map_result: list[
-            dict[
-                Literal["boxes", "scores", "labels"],
-                Tensor,
-            ]
-        ],
-) -> list[
-    dict[
-        Literal["boxes", "scores", "labels"],
-        npt.NDArray[np.float32 | np.uint8],
-    ]
-]:
-    map_np_result = [
-        {key: val.cpu().numpy() for key, val in r.items()} for r in map_result
-    ]
-    return map_np_result
+    def _map_to_numpy(self,
+                      map_result: list[
+                          dict[
+                              Literal["boxes", "scores", "labels"],
+                              Tensor,
+                          ]
+                      ],
+                      ) -> list[
+        dict[
+            Literal["boxes", "scores", "labels"],
+            npt.NDArray[np.float32 | np.uint8],
+        ]
+    ]:
+        map_np_result = [
+            {key: val.cpu().numpy() for key, val in r.items()} for r in map_result
+        ]
+        return map_np_result

@@ -34,6 +34,7 @@ currentFrame = None
 
 def init_detection_module():
     detection_service = DetectionService()
+    detection_service.load_unet_detector(os.path.join(App.root_path, "models"))
     App.detection_service = detection_service
 
 
