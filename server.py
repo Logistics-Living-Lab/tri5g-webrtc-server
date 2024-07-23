@@ -197,8 +197,10 @@ if __name__ == "__main__":
     parser.add_argument("--record-to", help="Write received media to a file.")
     parser.add_argument("--verbose", "-v", action="count")
     parser.add_argument("--url-key", help="String for URL disguise", default="", type=str)
-
+    parser.add_argument("--damage-model-file", help="Model file to use for airplane damage detection", type=str)
     args = parser.parse_args()
+
+    App.damage_detection_model_file = args.damage_model_file
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
