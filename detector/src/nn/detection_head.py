@@ -1,23 +1,23 @@
 import abc
-from typing import Any, Tuple, List, Union, Dict
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 import torch
 from torch import Tensor, nn
 
-CHANNELS_KERNEL = Tuple[int, int]
-LAYERS_ARGS = Tuple[CHANNELS_KERNEL, ...]
-BLOCK_ARGS = Tuple[LAYERS_ARGS, ...]
-UNSTRUCTURED_BLOCK_ARGS = List[Union[int, List[Union[int, Tuple[int, int]]]]]
+CHANNELS_KERNEL = tuple[int, int]
+LAYERS_ARGS = tuple[CHANNELS_KERNEL, ...]
+BLOCK_ARGS = tuple[LAYERS_ARGS, ...]
+UNSTRUCTURED_BLOCK_ARGS = list[int | list[int | tuple[int, int]]]
 
 
 class BaseDetectionHead(nn.Module):
     def __init__(
             self,
             n_classes: int,
-            anchors: Union [List[List[Tuple[float, float]]] , npt.NDArray[np.float32]],
-            scale_output_channels: List[int],
+            anchors: list[list[tuple[float, float]]] | npt.NDArray[np.float32],
+            scale_output_channels: list[int],
     ) -> None:
         super().__init__()
         self.n_classes = n_classes  # number of classes
@@ -42,7 +42,7 @@ class BaseDetectionHead(nn.Module):
         pass
 
     @abc.abstractmethod
-    def get_hyperparameters(self) -> Dict[str, Any]:
+    def get_hyperparameters(self) -> dict[str, Any]:
         pass
 
 
@@ -52,8 +52,8 @@ class YOLOv3Head(BaseDetectionHead):
     def __init__(
             self,
             n_classes: int,
-            anchors: Union [List[List[Tuple[float, float]]], npt.NDArray[np.float32]],
-            scale_output_channels: List[int],
+            anchors: list[list[tuple[float, float]]] | npt.NDArray[np.float32],
+            scale_output_channels: list[int],
     ):
         """Initializes YOLOv5 detection layer with specified classes,
         anchors, channels, and inplace operations."""
@@ -67,7 +67,7 @@ class YOLOv3Head(BaseDetectionHead):
             for ch in scale_output_channels
         )  # output conv
 
-    def forward(self, x: List[Tensor]) -> List[Tensor]:
+    def forward(self, x: list[Tensor]) -> list[Tensor]:
         """Processes input through YOLOv3 layers, altering shape for detection:
         `[x(bs, ny, nx, na, 5+nc)]` by number of detection scales."""
         outputs = []
@@ -84,7 +84,7 @@ class YOLOv3Head(BaseDetectionHead):
 
         return outputs
 
-    def get_hyperparameters(self) -> Dict[str, Any]:
+    def get_hyperparameters(self) -> dict[str, Any]:
         return {
             "n_classes": self.n_classes,
             "anchors": self.anchors,

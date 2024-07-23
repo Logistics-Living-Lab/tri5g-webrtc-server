@@ -1,4 +1,4 @@
-from typing import Any, Literal, List, Tuple, Union, Dict
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -23,9 +23,9 @@ class DetectionModule(nn.Module):
             blocks_args: UNSTRUCTURED_BLOCK_ARGS,
             n_classes: int,
             image_preprocessor: ImagePreprocessor,
-            anchors: Union[List[List[Tuple[float, float]]], npt.NDArray[np.float32]],
-            scale_output_channels: List[int],
-            backbone_output_key: Union[str, None] = None,
+            anchors: list[list[tuple[float, float]]] | npt.NDArray[np.float32],
+            scale_output_channels: list[int],
+            backbone_output_key: str | None = None,
     ) -> None:
         super().__init__()
         self.image_preprocessor = image_preprocessor
@@ -47,12 +47,12 @@ class DetectionModule(nn.Module):
     def forward(
             self,
             img: npt.NDArray[np.uint8],
-            conf_th: Union [float, None] = None,
-            device: Union[int, str] = "cpu",
-    ) -> List[
-        Dict[
+            conf_th: float | None = None,
+            device: int | str = "cpu",
+    ) -> list[
+        dict[
             Literal["boxes", "scores", "labels"],
-            npt.NDArray[Union[np.float32, np.uint8]],
+            npt.NDArray[np.float32 | np.uint8],
         ]
     ]:
         batch = self.image_preprocessor(img=img, device=device)
@@ -70,7 +70,7 @@ class DetectionModule(nn.Module):
 
     def _forward_batch(
             self, *args: Any, **kwargs: Any
-    ) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]:
+    ) -> tuple[list[Tensor], list[Tensor], list[Tensor]]:
         if self.backbone_output_key is None:
             feature_map = self.backbone(*args, **kwargs)
         else:
@@ -88,16 +88,16 @@ class DetectionModule(nn.Module):
 
 
 def _mAP2numpy(
-        map_result: List[
-            Dict[
+        map_result: list[
+            dict[
                 Literal["boxes", "scores", "labels"],
                 Tensor,
             ]
         ],
-) -> List[
-    Dict[
+) -> list[
+    dict[
         Literal["boxes", "scores", "labels"],
-        npt.NDArray[Union[np.float32 , np.uint8]],
+        npt.NDArray[np.float32 | np.uint8],
     ]
 ]:
     map_np_result = [

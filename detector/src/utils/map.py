@@ -1,4 +1,4 @@
-from typing import Literal, List, Dict, Union, Tuple
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -7,16 +7,16 @@ from torch import Tensor
 
 
 def get_mAP_arguments(
-    bboxes_matrices: List[Tensor],
-    obj_matrices: List[Tensor],
-    classes_matrices: List[Tensor],
-    anchors: npt.NDArray[np.float32],
-    conf_th: Union [float, None] = None,
-    n_max_obj: Union [int, None] = None,
-) -> List[Dict[Literal["boxes", "scores", "labels"], Tensor]]:
+        bboxes_matrices: list[Tensor],
+        obj_matrices: list[Tensor],
+        classes_matrices: list[Tensor],
+        anchors: npt.NDArray[np.float32],
+        conf_th: float | None = None,
+        n_max_obj: int | None = None,
+) -> list[dict[Literal["boxes", "scores", "labels"], Tensor]]:
     n_scales = len(obj_matrices)
     batch_size = obj_matrices[0].size(0)
-    records: List[Dict[Literal["boxes", "scores", "labels"], List[Tensor]]] = [
+    records: list[dict[Literal["boxes", "scores", "labels"], list[Tensor]]] = [
         dict(boxes=[], scores=[], labels=[]) for _ in range(batch_size)
     ]
 
@@ -78,11 +78,11 @@ def get_mAP_arguments(
 
 
 def _preds2xywh(
-    bboxes: Tensor,
-    mask: Tensor,
-    grid_shape: Tuple[int, int],
-    scale_id: int,
-    anchors: npt.NDArray[np.float32],
+        bboxes: Tensor,
+        mask: Tensor,
+        grid_shape: tuple[int, int],
+        scale_id: int,
+        anchors: npt.NDArray[np.float32],
 ) -> Tensor:
     """_summary_
 

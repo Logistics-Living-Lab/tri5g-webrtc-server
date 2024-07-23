@@ -1,5 +1,3 @@
-from typing import Literal, List, Dict, Union, Tuple
-
 import cv2
 import numpy as np
 import numpy.typing as npt
@@ -10,9 +8,9 @@ from torch import Tensor
 class ImagePreprocessor:
     def __init__(
             self,
-            mean: Tuple[float, float, float],
-            std: Tuple[float, float, float],
-            image_size: Union[Tuple[int, int], None],
+            mean: tuple[float, float, float],
+            std: tuple[float, float, float],
+            image_size: tuple[int, int] | None,
     ) -> None:
         self.mean = np.array(mean, dtype=np.float32)
         self.std = np.array(std, dtype=np.float32)
@@ -20,8 +18,8 @@ class ImagePreprocessor:
 
     def __call__(
             self,
-            img: npt.NDArray[Union[np.uint8, np.float32]],
-            device: Union[int, str],
+            img: npt.NDArray[np.uint8 | np.float32],
+            device: int | str,
     ) -> Tensor:
         img = (img.astype(np.float32) - self.mean) / self.std
         if self.image_size is not None:

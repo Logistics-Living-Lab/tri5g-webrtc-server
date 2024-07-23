@@ -1,11 +1,11 @@
-from typing import Any, Iterable, Literal, List, Dict, Union, Tuple
+from typing import Any, Iterable
 
 from torch import Tensor, nn
 
-CHANNELS_KERNEL = Tuple[int, int]
-LAYERS_ARGS = Tuple[CHANNELS_KERNEL, ...]
-BLOCK_ARGS = Tuple[LAYERS_ARGS, ...]
-UNSTRUCTURED_BLOCK_ARGS = List[Union [int , List[Union [int, Tuple[int, int]]]]]
+CHANNELS_KERNEL = tuple[int, int]
+LAYERS_ARGS = tuple[CHANNELS_KERNEL, ...]
+BLOCK_ARGS = tuple[LAYERS_ARGS, ...]
+UNSTRUCTURED_BLOCK_ARGS = list[int | list[int | tuple[int, int]]]
 
 
 class ConvBlock(nn.Module):
@@ -37,7 +37,7 @@ class ConvBlock(nn.Module):
             prev_ch = out_channels
         self.convs = nn.ModuleList(convs)
 
-    def forward(self, x: Tensor, **kwargs: Dict[Any, Any]) -> Tensor:
+    def forward(self, x: Tensor, **kwargs: dict[Any, Any]) -> Tensor:
         for layer in self.convs:
             x = layer(x)
         return x
@@ -51,7 +51,7 @@ class Down(nn.Module):
             ConvBlock(in_ch=in_ch, layers_args=layers_args),
         )
 
-    def forward(self, x: Tensor, **kwargs: Dict[Any, Any]) -> Tensor:
+    def forward(self, x: Tensor, **kwargs: dict[Any, Any]) -> Tensor:
         return self.maxpool_conv(x)  # type: ignore[no-any-return]
 
 
@@ -65,14 +65,14 @@ class UnetEncoder(nn.Module):
             self,
             n_channels: int,
             blocks_args: BLOCK_ARGS,
-            *args: Tuple[Any, ...],
-            **kwargs: Dict[Any, Any],
+            *args: tuple[Any, ...],
+            **kwargs: dict[Any, Any],
     ) -> None:
         super().__init__()
         self.n_channels = n_channels
         self.blocks_args = blocks_args
 
-        conv_blocks: List[nn.Module] = [
+        conv_blocks: list[nn.Module] = [
             ConvBlock(in_ch=n_channels, layers_args=blocks_args[0])
         ]
         prev_ch = get_output_channels(blocks_args[0])
@@ -84,7 +84,7 @@ class UnetEncoder(nn.Module):
 
     def forward(
             self, x: Tensor, *args: Any, **kwargs: Any
-    ) -> Dict[str, Union[ Tensor , List[Tensor]]]:
+    ) -> dict[str, Tensor | list[Tensor]]:
         activations = []
         for block in self.conv_blocks:
             x = block(x)
@@ -101,7 +101,7 @@ class UnetEncoder(nn.Module):
         self.conv_blocks.extend(conv_blocks)
         self.blocks_args += new_blocks_args
 
-    def get_hyperparameters(self) -> Dict[str, Any]:
+    def get_hyperparameters(self) -> dict[str, Any]:
         return dict(
             n_channels=self.n_channels,
             blocks_args=self.blocks_args,
@@ -112,14 +112,14 @@ def standarize_blocks_args(
         blocks_args: UNSTRUCTURED_BLOCK_ARGS,
         default_kernel_size: int = 3,
 ) -> BLOCK_ARGS:
-    def decode_layer_args(layer_args: Union[int, Tuple[int, int]]) -> CHANNELS_KERNEL:
+    def decode_layer_args(layer_args: int | tuple[int, int]) -> CHANNELS_KERNEL:
         if isinstance(layer_args, int):
             return (layer_args, default_kernel_size)
         else:
             return layer_args
 
     def decode_multi_layer_args(
-            multi_layer_args: Union [int, Iterable[Union[int, Tuple[int, int]]]]
+            multi_layer_args: int | Iterable[int | tuple[int, int]]
     ) -> LAYERS_ARGS:
         if isinstance(multi_layer_args, int):
             return ((multi_layer_args, default_kernel_size),)

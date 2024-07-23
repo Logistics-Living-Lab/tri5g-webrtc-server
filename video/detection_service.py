@@ -4,11 +4,11 @@ import numpy as np
 import numpy.typing as npt
 
 from ultralytics import YOLO
-from ultralytics.yolo.engine.results import Results
+from ultralytics.engine.results import Results
 
 from config.app import App
 from detector import detector
-from typing import Literal, Dict, Union
+from typing import Literal
 
 
 class DetectionService:
@@ -31,8 +31,8 @@ class DetectionService:
         return results
 
 
-    def adjust_output(self, yolo_result: Results) -> Dict[
-        Literal["boxes", "scores", "labels"], npt.NDArray[Union [np.float32 , np.uint8]]
+    def adjust_output(self, yolo_result: Results) -> dict[
+        Literal["boxes", "scores", "labels"], npt.NDArray[np.float32 | np.uint8]
     ]:
         """Returns detected objects as a dict of:
         - denormalized bounding boxes in xyxy format (left top, right bottom),
