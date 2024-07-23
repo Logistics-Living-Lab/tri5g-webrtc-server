@@ -1,17 +1,16 @@
-from typing import Any, Literal
-from pathlib import Path
-
 import os
+from pathlib import Path
+from typing import Any, Literal
+
 import numpy as np
 import numpy.typing as npt
 import torch
-from torch import Tensor, nn
 import yaml
+from torch import Tensor, nn
 
 from detector.src.nn.detection_head import YOLOv3Head
 from detector.src.utils.map import get_mAP_arguments
 from detector.src.utils.preprocessing import ImagePreprocessor
-
 from .nn.unet_backbone import (
     UNSTRUCTURED_BLOCK_ARGS,
     UnetEncoder,

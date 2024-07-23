@@ -1,14 +1,15 @@
-import time
-import logging
-import gc
-import concurrent.futures
-import numpy as np
-import cv2
 import asyncio
-import random
+import concurrent.futures
+import gc
+import logging
+import time
 from functools import partial
-from av import VideoFrame
+
+import cv2
+import numpy as np
 from aiortc import MediaStreamTrack
+from av import VideoFrame
+
 from config.config import Config
 from video.detection_service import DetectionService
 
@@ -86,7 +87,7 @@ class VideoTransformTrack(MediaStreamTrack):
     async def manipulate_frame(self, img, threshold_confidence):
         # Run the synchronous frame manipulation function in a separate thread
         return await asyncio.to_thread(
-            partial(self.detection_service.detect, image=img, conf_th=threshold_confidence))
+            partial(self.detection_service.detect_unet, image=img, conf_th=threshold_confidence))
 
     async def manipulate_frame_dummy(self, img, threshold_confidence):
         await asyncio.sleep(2)

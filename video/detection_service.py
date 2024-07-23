@@ -1,15 +1,13 @@
-import torch
+from typing import Literal
+
 import numpy as np
 import numpy.typing as npt
-import os
-import yaml
-
+import torch
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
 from config.app import App
 from detector import DetectionModule
-from typing import Literal
 
 
 class DetectionService:

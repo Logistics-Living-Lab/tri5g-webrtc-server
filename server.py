@@ -1,25 +1,19 @@
 import argparse
 import asyncio
-
 import json
 import logging
+import os
 import ssl
 import uuid
 
-import os
-
-import av
 import torch
-import sys
-
 from aiohttp import web
-from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, \
-    RTCRtpCodecParameters, RTCRtpCodecCapability, RTCRtpSender
-from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
+from aiortc.contrib.media import MediaRelay
 
+from config.app import App
 from video.detection_service import DetectionService
 from video.video_transform_track import VideoTransformTrack
-from config.app import App
 
 logger = logging.getLogger("pc")
 pcs = set()
