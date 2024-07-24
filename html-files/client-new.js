@@ -172,6 +172,10 @@ function onClickLive() {
     }
 }
 
+$(document).ready(() => {
+    console.log("Ready")
+})
+
 // document.getElementById('video01').addEventListener('loadedmetadata', () => {
 //     // Retrieve the width and height of the video
 //     const width = document.getElementById('video01').videoWidth;
