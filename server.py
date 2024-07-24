@@ -15,6 +15,7 @@ from config.app_config import AppConfig
 from config.app import App
 from services.message import Message
 from services.message_service import MessageService
+from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
 from video.video_transform_track import VideoTransformTrack
 
@@ -71,8 +72,12 @@ async def offer(request):
     def on_datachannel(channel):
         @channel.on("message")
         def on_message(message):
-            if isinstance(message, str) and message.startswith("ping"):
-                channel.send("pong" + message[4:])
+            if isinstance(message, str):
+                message_json = json.loads(message)
+                if message_json["type"] == "rtt-client":
+                    channel.send(message)
+                if message_json["type"] == "rtt-client-result":
+                    App.telemetry_service.rtt_camera = message_json["rtt"]
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
@@ -141,7 +146,7 @@ async def viewer(request):
         def on_message(message_json):
             message = Message.from_json(message_json)
             if message.payload["type"] == "rtt":
-                #Just return message
+                # Just return message
                 App.message_service.send_message(message)
 
     @pc.on("connectionstatechange")
@@ -173,10 +178,35 @@ async def viewer(request):
 
 
 async def on_shutdown(app):
+    App.telemetry_service.shutdown()
     # close peer connections
     coros = [pc.close() for pc in pcs]
     await asyncio.gather(*coros)
     pcs.clear()
+
+
+def init_app():
+    loop = asyncio.get_event_loop()
+    loop.set_debug(True)
+
+    app = web.Application()
+
+    init_detection_module()
+    App.message_service = MessageService()
+    App.telemetry_service = TelemetryService(App.message_service)
+
+    app.on_shutdown.append(on_shutdown)
+    app.router.add_get("/" + args.url_key, tailwind)
+    app.router.add_get("/client-new.js", javascript)
+    app.router.add_get("/style.css", css)
+    app.router.add_post("/offer" + args.url_key, offer)
+    app.router.add_post("/viewonly", viewer)
+
+    return app
+
+
+async def on_startup(app):
+    asyncio.create_task(App.telemetry_service.start())
 
 
 if __name__ == "__main__":
@@ -224,19 +254,8 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
-    init_detection_module()
-    App.message_service = MessageService()
-
-    loop = asyncio.get_event_loop()
-    loop.set_debug(True)
-
-    app = web.Application()
-    app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/" + args.url_key, tailwind)
-    app.router.add_get("/client-new.js", javascript)
-    app.router.add_get("/style.css", css)
-    app.router.add_post("/offer" + args.url_key, offer)
-    app.router.add_post("/viewonly", viewer)
+    app = init_app()
+    app.on_startup.append(on_startup)
 
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

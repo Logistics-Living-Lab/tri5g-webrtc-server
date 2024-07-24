@@ -121,8 +121,6 @@ class VideoTransformTrack(MediaStreamTrack):
         img_width = img.shape[1]
         img_height = img.shape[0]
 
-        App.message_service.send_message(Message({"type": "statistics", "fpsDecoding": self.fps_decoding}))
-
         text = f"Boxes: {len(boxes)} - Decoding: {round(self.fps_decoding, 1)} FPS - Detection: {round(self.fps_detection, 1)} FPS"
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 1
@@ -206,6 +204,10 @@ class VideoTransformTrack(MediaStreamTrack):
                 f"Frames per second (Decoding): {round(self.fps_decoding, 1)}")
             logging.info(
                 f"Frames per second (Detection): {round(self.fps_detection, 1)}")
+
+            App.telemetry_service.fps_decoding = self.fps_decoding
+            App.telemetry_service.fps_detection = self.fps_detection
+            App.telemetry_service.detection_time = self.detection_time
 
             self.frames_decoded_count = 0
             self.frames_detection_count = 0

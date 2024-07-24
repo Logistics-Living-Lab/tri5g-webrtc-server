@@ -71,15 +71,19 @@ $(document).ready(() => {
         });
 
         dc.addEventListener('message', (evt) => {
-            console.log("Datachannel: < " + evt.data);
             const messageJson = JSON.parse(evt.data)
             console.log(messageJson)
+
             if (messageJson.type === 'rtt') {
                 let elapsed_ms = current_stamp() - parseInt(messageJson.timestamp, 10);
                 $('#rttValue').text(`${elapsed_ms} ms`)
             }
-            if (messageJson.type === 'statistics') {
+
+            //{type: 'telemetry', rttCamera: 4, fpsDecoding: 30.057103085584057, fpsDetection: 0, detectionTime: 1721821298844658700}
+            if (messageJson.type === 'telemetry') {
+                $('#rttCamera').text(`${parseInt(messageJson.rttCamera)} ms`)
                 $('#fpsDecodingValue').text(`${parseInt(messageJson.fpsDecoding)}`)
+                $('#fpsDetectionValue').text(`${parseInt(messageJson.fpsDetection)}`)
             }
         });
 

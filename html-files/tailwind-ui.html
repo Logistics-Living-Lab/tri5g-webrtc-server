@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Display</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="style.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="client-new.js"></script>
@@ -32,7 +33,32 @@
                     <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
                 </div>
                 <div class="text-center mt-4">
+                    <p id="rttCamera" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                    <p class="text-gray-600 mt-2">
+                        Camera
+                        <i class="fas fa-arrow-left"></i>
+                        <i class="fas fa-arrow-right"></i>
+                        Server
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-center">
+                    <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                </div>
+                <div class="text-center mt-4">
                     <p id="rttValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                    <p class="text-gray-600 mt-2">
+                        Server
+                        <i class="fas fa-arrow-left"></i>
+                        <i class="fas fa-arrow-right"></i>
+                        User
+                    </p>
                 </div>
             </div>
         </div>

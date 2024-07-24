@@ -8,4 +8,5 @@ class MessageService:
         self.channel = None
 
     def send_message(self, message: Message):
-        self.channel.send(message.to_json())
+        if self.channel is not None:
+            self.channel.send(message.to_json())
