@@ -10,7 +10,9 @@ import numpy as np
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
+from config.app import App
 from config.config import Config
+from services.message import Message
 from video.detection_service import DetectionService
 
 
@@ -112,10 +114,14 @@ class VideoTransformTrack(MediaStreamTrack):
             logging.info(box)
             logging.info(detection_result["names"][index])
             cv2.rectangle(img, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
-            cv2.putText(img,  f"{detection_result['names'][index]} - {round(detection_result['scores'][index] * 100.0)}%", (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(img,
+                        f"{detection_result['names'][index]} - {round(detection_result['scores'][index] * 100.0)}%",
+                        (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
         img_width = img.shape[1]
         img_height = img.shape[0]
+
+        App.message_service.send_message(Message({"type": "statistics", "fpsDecoding": self.fps_decoding}))
 
         text = f"Boxes: {len(boxes)} - Decoding: {round(self.fps_decoding, 1)} FPS - Detection: {round(self.fps_detection, 1)} FPS"
         font = cv2.FONT_HERSHEY_SIMPLEX

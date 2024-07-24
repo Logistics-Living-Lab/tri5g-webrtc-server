@@ -11,7 +11,10 @@ from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 from aiortc.contrib.media import MediaRelay
 
+from config.app_config import AppConfig
 from config.app import App
+from services.message import Message
+from services.message_service import MessageService
 from video.detection_service import DetectionService
 from video.video_transform_track import VideoTransformTrack
 
@@ -28,17 +31,22 @@ currentFrame = None
 
 def init_detection_module():
     detection_service = DetectionService()
-    detection_service.load_unet_detector(os.path.join(App.root_path, "models"))
+    detection_service.load_unet_detector(os.path.join(AppConfig.root_path, "models"))
     App.detection_service = detection_service
 
 
+async def css(request):
+    content = open(os.path.join(AppConfig.root_path, "html-files/style.css"), "r").read()
+    return web.Response(content_type="text/css", text=content)
+
+
 async def javascript(request):
-    content = open(os.path.join(App.root_path, "html-files/client-new.js"), "r").read()
+    content = open(os.path.join(AppConfig.root_path, "html-files/client-new.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
 
 async def tailwind(request):
-    content = open(os.path.join(App.root_path, "html-files/tailwind-ui.html"), "r").read()
+    content = open(os.path.join(AppConfig.root_path, "html-files/tailwind-ui.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
 
 
@@ -127,10 +135,14 @@ async def viewer(request):
 
     @pc.on("datachannel")
     def on_datachannel(channel):
+        App.message_service.channel = channel
+
         @channel.on("message")
-        def on_message(message):
-            if isinstance(message, str) and message.startswith("ping"):
-                channel.send("pong" + message[4:])
+        def on_message(message_json):
+            message = Message.from_json(message_json)
+            if message.payload["type"] == "rtt":
+                #Just return message
+                App.message_service.send_message(message)
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
@@ -174,8 +186,7 @@ if __name__ == "__main__":
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
 
-
-    App.root_path = os.path.dirname(os.path.abspath(__file__))
+    AppConfig.root_path = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"{os.path.dirname(os.path.abspath(__file__))}")
 
     if torch.cuda.is_available():
@@ -200,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument("--damage-model-file", help="Model file to use for airplane damage detection", type=str)
     args = parser.parse_args()
 
-    App.damage_detection_model_file = args.damage_model_file
+    AppConfig.damage_detection_model_file = args.damage_model_file
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -214,6 +225,7 @@ if __name__ == "__main__":
         ssl_context = None
 
     init_detection_module()
+    App.message_service = MessageService()
 
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
@@ -222,8 +234,10 @@ if __name__ == "__main__":
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/" + args.url_key, tailwind)
     app.router.add_get("/client-new.js", javascript)
+    app.router.add_get("/style.css", css)
     app.router.add_post("/offer" + args.url_key, offer)
     app.router.add_post("/viewonly", viewer)
+
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )

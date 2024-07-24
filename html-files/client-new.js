@@ -62,21 +62,24 @@ $(document).ready(() => {
         dc.addEventListener('open', () => {
             console.log("Datachannel - open")
             dcInterval = setInterval(() => {
-                const currentTime = current_stamp()
-                console.log(currentTime)
-                console.log(time_start)
-                let message = 'ping ' + current_stamp();
-                console.log("Datachannel: > " + message);
-                dc.send(message);
+                let message = {
+                    type: "rtt",
+                    timestamp: current_stamp()
+                }
+                dc.send(JSON.stringify(message));
             }, 1000);
         });
 
         dc.addEventListener('message', (evt) => {
             console.log("Datachannel: < " + evt.data);
-            if (evt.data.substring(0, 4) === 'pong') {
-                let elapsed_ms = current_stamp() - parseInt(evt.data.substring(5), 10);
-                console.log(' RTT ' + elapsed_ms)
+            const messageJson = JSON.parse(evt.data)
+            console.log(messageJson)
+            if (messageJson.type === 'rtt') {
+                let elapsed_ms = current_stamp() - parseInt(messageJson.timestamp, 10);
                 $('#rttValue').text(`${elapsed_ms} ms`)
+            }
+            if (messageJson.type === 'statistics') {
+                $('#fpsDecodingValue').text(`${parseInt(messageJson.fpsDecoding)}`)
             }
         });
 
