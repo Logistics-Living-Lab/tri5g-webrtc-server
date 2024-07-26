@@ -144,10 +144,10 @@ def init_web_app():
     app.middlewares.append(App.auth_service.basic_auth_middleware)
 
     app.on_shutdown.append(on_shutdown)
-    app.router.add_get("/" + args.url_key, tailwind)
+    app.router.add_get("/", tailwind)
     app.router.add_get("/client-new.js", javascript)
     app.router.add_get("/style.css", css)
-    app.router.add_post("/offer" + args.url_key, offer_producer)
+    app.router.add_post("/offer", offer_producer)
     app.router.add_post("/viewonly", offer_consumer)
 
     return app
@@ -212,7 +212,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("--record-to", help="Write received media to a file.")
     parser.add_argument("--verbose", "-v", action="count")
-    parser.add_argument("--url-key", help="String for URL disguise", default="", type=str)
     parser.add_argument("--damage-model-file", help="Model file to use for airplane damage detection", type=str)
 
     parser.add_argument("--create-user", help="Create user", action='store_true')
