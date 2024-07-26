@@ -15,8 +15,6 @@ from config.app_config import AppConfig
 from config.app import App
 from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
-from services.message import Message
-from services.message_service import MessageService
 from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
 from video.video_transform_track import VideoTransformTrack
@@ -26,6 +24,7 @@ logger = logging.getLogger("pc")
 
 def init_detection_module():
     detection_service = DetectionService()
+    detection_service.load_yolo(os.path.join(AppConfig.root_path, "models", AppConfig.damage_detection_model_file))
     detection_service.load_unet_detector(os.path.join(AppConfig.root_path, "models"))
     App.detection_service = detection_service
 
@@ -126,8 +125,7 @@ async def on_shutdown(app):
 
 def init_app_services():
     App.connection_manager = ConnectionManager()
-    App.message_service = MessageService(App.connection_manager)
-    App.telemetry_service = TelemetryService(App.message_service, App.connection_manager)
+    App.telemetry_service = TelemetryService(App.connection_manager)
     App.auth_service = Auth(os.path.join(AppConfig.root_path, "auth.json"))
 
 

@@ -14,7 +14,7 @@ class DetectionService:
 
     def __init__(self):
         self.device = "cpu"
-        self.yolo_model = YOLO(f"{AppConfig.root_path}/models/{AppConfig.damage_detection_model_file}", task='detect')
+        self.yolo_model: YOLO | None = None
         self.unet_detector: DetectionModule | None = None
 
     def load_unet_detector(self, model_dir_path, config_file_name="cfg.yaml"):
@@ -22,6 +22,9 @@ class DetectionService:
         if torch.cuda.is_available():
             self.device = "cuda:0"
             self.unet_detector.cuda(device=self.device)
+
+    def load_yolo(self, model_file: str):
+        self.yolo_model = YOLO(model_file, task='detect')
 
     def detect_unet(self, image, conf_th):
         return self.unet_detector.forward(image, conf_th=conf_th, device=self.device)
