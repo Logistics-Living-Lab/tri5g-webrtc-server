@@ -16,14 +16,54 @@ $(document).ready(() => {
     const numberOfTracks = 2
 
     function createPeerConnection(useTestVideo = false) {
-        let config = {
-            sdpSemantics: 'unified-plan'
-        };
+        // let config = {
+        //     sdpSemantics: 'unified-plan'
+        // };
 
-        const pc = new RTCPeerConnection(config)
-        // addEventListeners(pc)
+        const pc = new RTCPeerConnection()
+        pc.ondatachannel = (channelEvt) => {
+            console.log(channelEvt)
+            channelEvt.channel.addEventListener('open', () => {
 
-        // connect audio / video
+            })
+            channelEvt.channel.addEventListener('message', (messageEvt) => {
+                const messageJson = JSON.parse(messageEvt.data)
+                console.log(messageJson)
+
+                if (messageJson.type === 'rtt-packet') {
+                    if (channelEvt.channel.readyState === "open") {
+                        channelEvt.channel.send(messageEvt.data)
+                    }
+                }
+
+                if (messageJson.type === 'telemetry') {
+                    $('#rttCamera').text(`${parseInt(messageJson.rttProducer)} ms`)
+                    $('#rttValue').text(`${parseInt(messageJson.rttConsumer)} ms`)
+                    $('#fpsDecodingValue').text(`${parseInt(messageJson.fpsDecoding)}`)
+                    $('#fpsDetectionValue').text(`${parseInt(messageJson.fpsDetection)}`)
+                }
+            });
+        }
+
+        pc.addEventListener('datachannel', (evt) => {
+            console.log(evt.channel.label)
+        })
+
+        pc.addEventListener('icegatheringstatechange', (evt) => {
+            console.log("ICE Gathering: " + pc.iceGatheringState);
+        })
+
+        pc.addEventListener('iceconnectionstatechange', (evt) => {
+            console.log("ICE Connection: " + pc.iceConnectionState);
+        })
+
+        pc.addEventListener('signalingstatechange', (evt) => {
+            console.log("Signaling state: " + pc.signalingState);
+        })
+
+        pc.addEventListener('connectionstatechange', (evt) => {
+            console.log(evt)
+        })
         pc.addEventListener('track', (evt) => {
             const constraints = {};
 
@@ -40,7 +80,9 @@ $(document).ready(() => {
                     .catch((error) => console.log(error))
             }
         });
-        return pc;
+
+        console.log(pc)
+        return pc
     }
 
     const current_stamp = () => {
@@ -63,8 +105,7 @@ $(document).ready(() => {
             console.log("Datachannel - open")
             dcInterval = setInterval(() => {
                 let message = {
-                    type: "rtt",
-                    timestamp: current_stamp()
+                    type: "rtt", timestamp: current_stamp()
                 }
                 dc.send(JSON.stringify(message));
             }, 1000);
@@ -72,6 +113,7 @@ $(document).ready(() => {
 
         dc.addEventListener('message', (evt) => {
             const messageJson = JSON.parse(evt.data)
+            console.log("Test")
             console.log(messageJson)
 
             if (messageJson.type === 'rtt') {
@@ -90,57 +132,57 @@ $(document).ready(() => {
         return dc
     }
 
-    function addEventListeners(pc) {
-        pc.addEventListener('icegatheringstatechange', () => {
-            iceGatheringLog.textContent += ' -> ' + pc.iceGatheringState;
-        }, false);
-        iceGatheringLog.textContent = pc.iceGatheringState;
+    async function negotiateDebug(pc) {
+        for (let i = 0; i < numberOfTracks; i++) {
+            pc.addTransceiver('video', {direction: 'recvonly'});
+        }
 
-        pc.addEventListener('iceconnectionstatechange', () => {
-            iceConnectionLog.textContent += ' -> ' + pc.iceConnectionState;
-        }, false);
-        iceConnectionLog.textContent = pc.iceConnectionState;
+        // pc.createDataChannel('telemetry')
+        let offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-        pc.addEventListener('signalingstatechange', () => {
-            signalingLog.textContent += ' -> ' + pc.signalingState;
-        }, false);
-        signalingLog.textContent = pc.signalingState;
+        let response = await fetch("/viewonly", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                sdp: pc.localDescription.sdp,
+                type: pc.localDescription.type
+            })
+        });
+
+        let answer = await response.json();
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
     }
 
     function negotiate(pc, channel = "") {
         for (let i = 0; i < numberOfTracks; i++) {
             pc.addTransceiver('video', {direction: 'recvonly'});
         }
-
-        pc.getTransceivers().forEach(transceiver => {
-            // transceiver.setCodecPreferences()
-        })
-
         return pc.createOffer().then((offer) => {
             // Iterate over the SDP lines to find the video media section
-            let sdpLines = offer.sdp.split('\r\n');
-            let isVideoSection = false;
-            let h264Added = false;
-            const maxBitrate = 40000000
-            for (let i = 0; i < sdpLines.length; i++) {
-                if (sdpLines[i].startsWith('m=video')) {
-                    isVideoSection = true;
-                } else if (isVideoSection && sdpLines[i].startsWith('a=rtpmap')) {
-                    // Add H.264 codec parameters if VP8 or VP9 is found
-                    if (sdpLines[i].includes('VP8') || sdpLines[i].includes('VP9')) {
-                        sdpLines.splice(i + 1, 0, `a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f`);
-                        h264Added = true;
-                    }
-                } else if (isVideoSection && h264Added && sdpLines[i].startsWith('a=rtcp-fb')) {
-                    // Add max bitrate attribute after H.264 parameters
-                    sdpLines.splice(i + 1, 0, `a=max-bitrate:${maxBitrate}`);
-                    break;
-                }
-            }
-
-            // Update the SDP offer with modified lines
-            const modifiedSdpOffer = sdpLines.join('\r\n');
-            offer.sdp = modifiedSdpOffer
+            // let sdpLines = offer.sdp.split('\r\n');
+            // let isVideoSection = false;
+            // let h264Added = false;
+            // const maxBitrate = 40000000
+            // for (let i = 0; i < sdpLines.length; i++) {
+            //     if (sdpLines[i].startsWith('m=video')) {
+            //         isVideoSection = true;
+            //     } else if (isVideoSection && sdpLines[i].startsWith('a=rtpmap')) {
+            //         // Add H.264 codec parameters if VP8 or VP9 is found
+            //         if (sdpLines[i].includes('VP8') || sdpLines[i].includes('VP9')) {
+            //             sdpLines.splice(i + 1, 0, `a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f`);
+            //             h264Added = true;
+            //         }
+            //     } else if (isVideoSection && h264Added && sdpLines[i].startsWith('a=rtcp-fb')) {
+            //         // Add max bitrate attribute after H.264 parameters
+            //         sdpLines.splice(i + 1, 0, `a=max-bitrate:${maxBitrate}`);
+            //         break;
+            //     }
+            // }
+            //
+            // // Update the SDP offer with modified lines
+            // const modifiedSdpOffer = sdpLines.join('\r\n');
+            // offer.sdp = modifiedSdpOffer
 
             return pc.setLocalDescription(offer);
         }).then(() => {
@@ -165,15 +207,10 @@ $(document).ready(() => {
             // const sdpWithMaxBitrate = offer.sdp.replace(/a=mid:video\r?\n/g, '$&a=recvonly\r\na=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\na=max-bitrate:' + maxBitrate + '\r\n');
             return fetch('/viewonly', {
                 body: JSON.stringify({
-                    sdp: offer.sdp,
-                    type: offer.type,
-                    video_transform: '',
-                    channel: channel
-                }),
-                headers: {
+                    sdp: offer.sdp, type: offer.type, video_transform: '', channel: channel
+                }), headers: {
                     'Content-Type': 'application/json'
-                },
-                method: 'POST'
+                }, method: 'POST'
             });
         }).then((response) => {
             return response.json();
@@ -182,22 +219,6 @@ $(document).ready(() => {
         }).catch((e) => {
             alert(e);
         });
-    }
-
-    function onClickTestVideo() {
-        if (!connectedTestVideo) {
-            document.getElementById("btnConnectTestVideo").textContent = "Disconnect"
-            let pc1 = createPeerConnection(true);
-            pcsTest.push(pc1)
-            negotiate(pc1, 'test-video');
-            connectedTestVideo = true
-        } else {
-            document.getElementById("btnConnectTestVideo").textContent = "Connect"
-            closeDataConnection(dcTest)
-            closePeerConnections(pcsTest)
-            pcsTest = []
-            connectedTestVideo = false
-        }
     }
 
     function closeDataConnections(dataConnections) {
@@ -232,7 +253,9 @@ $(document).ready(() => {
             let pc1 = createPeerConnection();
             dataConnections.push(createDataConnection(pc1))
             peerConnections.push(pc1)
-            negotiate(pc1);
+            negotiateDebug(pc1).then((pc) => {
+                console.log(pc)
+            })
             connected = true
         } else {
             document.getElementById("btnConnectLive").textContent = "Connect"

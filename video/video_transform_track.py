@@ -51,7 +51,7 @@ class VideoTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
         self.frameCounter += 1
         self.frames_decoded_count += 1
-        logging.info(f"{self.id} VideoStreamTrack | FRAME: {frame.index}")
+        # logging.info(f"{self.id} VideoStreamTrack | FRAME: {frame.index}")
         # logging.info(f"{self.track.id}")
         # logging.info(
         #     f"#### After receive Frame[{frame.index}]: [{self.name}] {time.time() * 1000 - self.start_time}")

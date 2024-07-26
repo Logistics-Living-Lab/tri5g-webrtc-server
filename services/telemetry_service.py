@@ -1,13 +1,14 @@
 import asyncio
 import logging
 
+from services.connection_manager import ConnectionManager
 from services.message import Message
 from services.message_service import MessageService
 
 
 class TelemetryService:
-    def __init__(self, message_service: MessageService):
-        self.message_service: MessageService = message_service
+    def __init__(self, message_service: MessageService, connection_manager: ConnectionManager):
+        self.__connection_manager = connection_manager
         self.rtt_camera = 0
         self.fps_decoding = 0
         self.fps_detection = 0
@@ -15,21 +16,19 @@ class TelemetryService:
         self.send_telemetry_task: asyncio.Task | None = None
 
     async def start(self):
-        self.send_telemetry_task = self._send_statistics()
+        self.send_telemetry_task = self.__send_statistics()
         await self.send_telemetry_task
 
     def shutdown(self):
         self.send_telemetry_task.cancel()
 
-    async def _send_statistics(self):
+    async def __send_statistics(self):
         while True:
-            message = {
-                'type': 'telemetry',
-                'rttCamera': self.rtt_camera,
-                'fpsDecoding': self.fps_decoding,
-                'fpsDetection': self.fps_detection,
-                'detectionTime': self.detection_time
-            }
-            logging.info(message)
-            self.message_service.send_message(Message(message))
+            producer_connection = self.__connection_manager.get_primary_producer_connection()
+            if producer_connection is not None:
+                self.rtt_camera = producer_connection.rtt_ms
+
+            for connection in self.__connection_manager.get_all_connections():
+                connection.send_rtt_packet()
+                connection.send_statistics(self.rtt_camera, self.fps_decoding, self.fps_detection, self.detection_time)
             await asyncio.sleep(1)
