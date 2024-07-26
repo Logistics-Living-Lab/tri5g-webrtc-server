@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 import numpy as np
@@ -13,6 +14,7 @@ from detector import DetectionModule
 class DetectionService:
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.device = "cpu"
         self.yolo_model: YOLO | None = None
         self.unet_detector: DetectionModule | None = None
@@ -22,9 +24,11 @@ class DetectionService:
         if torch.cuda.is_available():
             self.device = "cuda:0"
             self.unet_detector.cuda(device=self.device)
+        self.logger.info(f"Loaded unet model config: {model_dir_path}/{config_file_name}")
 
     def load_yolo(self, model_file: str):
         self.yolo_model = YOLO(model_file, task='detect')
+        self.logger.info(f"Loaded yolo model: {model_file}")
 
     def detect_unet(self, image, conf_th):
         return self.unet_detector.forward(image, conf_th=conf_th, device=self.device)
