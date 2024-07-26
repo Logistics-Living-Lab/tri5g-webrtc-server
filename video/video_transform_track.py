@@ -1,217 +1,97 @@
 import asyncio
-import concurrent.futures
 import gc
 import logging
 import time
-from functools import partial
+from asyncio import Task
 
-import cv2
-import numpy as np
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
 from config.app import App
-from config.config import Config
-from services.message import Message
-from video.detection_service import DetectionService
+from video.transformers.video_transformer import VideoTransformer
 
 
 class VideoTransformTrack(MediaStreamTrack):
     kind = "video"
-    frameCounter = 0
-    logger = logging.getLogger("VideoTransformTrack")
 
-    def __init__(self, track, transform, name, detection_service: DetectionService):
+    def __init__(self, track, name, video_transformer: VideoTransformer):
         super().__init__()
+        self.logger = logging.getLogger(__name__)
         self.track = track
-        self.transform = transform
         self.name = name
-        self.is_processing_frame = False
-        self.last_frame = None
-        self.manipulated_frame = None
-        self.manipulation_task = None
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-        self.detection_service = detection_service
-        self.start_time = 0
-        self.detection_time = 0
-        self.frame_monitoring_time = None
-        self.frames_decoded_count = 0
-        self.frames_detection_count = 0
-        self.fps_decoding = 0
-        self.fps_detection = 0
+        self.video_transformer: VideoTransformer = video_transformer
+
+        self.__is_processing_frame = False
+        self.__current_frame = None
+        self.__transformation_task: Task | None = None
+        self.__telemetry_task: Task | None = None
+        self.__timestamp_start_ns = None
+        self.__decoded_incoming_frames = 0
+        self.__transformed_frames_count = 0
+        self.__detection_time = 0
+        self.__fps_decoding = 0
+        self.__fps_detection = 0
+        self.on("ended", self.on_track_ended)
+
+    async def create_transformation_task(self, frame: VideoFrame):
+        transformed_frame = await self.video_transformer.transform_frame_task(frame)
+        self.__current_frame = transformed_frame
+        self.__detection_time = self.video_transformer.measured_detection_time_ms
+        self.__transformed_frames_count += 1
+        self.__is_processing_frame = False
+
+    def on_track_ended(self):
+        self.__transformation_task.cancel()
+
+        if self.__telemetry_task:
+            self.__telemetry_task.cancel()
+
+    async def start_telemetry_task(self):
+        self.__telemetry_task = self.check_for_garbage_collection()
+        await self.check_for_garbage_collection()
 
     async def recv(self):
-        if self.frame_monitoring_time is None:
-            self.frame_monitoring_time = time.time_ns()
+        if self.__timestamp_start_ns is None:
+            self.__timestamp_start_ns = time.time_ns()
 
-        self.check_for_garbage_collection()
+        if not self.__telemetry_task:
+            asyncio.create_task(self.start_telemetry_task())
 
-        self.start_time = time.time() * 1000
-        # logging.info(f"Before receive: [{self.name}] {time.time() * 1000 - self.start_time}")
         frame = await self.track.recv()
-        self.frameCounter += 1
-        self.frames_decoded_count += 1
-        # logging.info(f"{self.id} VideoStreamTrack | FRAME: {frame.index}")
-        # logging.info(f"{self.track.id}")
-        # logging.info(
-        #     f"#### After receive Frame[{frame.index}]: [{self.name}] {time.time() * 1000 - self.start_time}")
+        self.__decoded_incoming_frames += 1
 
         # Only on first run, ensure that last_frame is not empty
-        if self.last_frame is None:
-            self.last_frame = frame
+        if self.__current_frame is None:
+            self.__current_frame = frame
 
-        if self.is_processing_frame:
-            #     logging.info("Skip frame")
-            return self.last_frame
+        if self.__is_processing_frame:
+            return self.__current_frame
 
-        self.is_processing_frame = True
+        self.__is_processing_frame = True
+        if not self.__transformation_task or self.__transformation_task.done():
+            self.__transformation_task = asyncio.create_task(self.create_transformation_task(frame))
 
-        if self.transform == "fence-detection":
-            img = frame.to_ndarray(format="bgr24")
-            np_mean = np.array(Config.FENCE_DETECTION_MEAN, dtype=np.float32)
-            np_std = np.array(Config.FENCE_DETECTION_STD, dtype=np.float32)
-            normalized_img = (img - np_mean) / np_std
+        return self.__current_frame
 
-            if not self.manipulation_task or self.manipulation_task.done():
-                self.manipulation_task = asyncio.create_task(self.start_manipulation_task(frame, normalized_img, img))
-        elif self.transform == "airplane-damage":
-            img = frame.to_ndarray(format="bgr24")
-            img = cv2.resize(img, (960, 960))
-            if not self.manipulation_task or self.manipulation_task.done():
-                self.manipulation_task = asyncio.create_task(self.detect_airplane_damages(frame, img))
-        else:
-            self.last_frame = frame
-            self.is_processing_frame = False
+    async def check_for_garbage_collection(self):
+        while True:
+            passed_seconds = (((time.time_ns() - self.__timestamp_start_ns) + 0.000000001) / 1_000_000_000)
 
-        # VideoTransformTrack.logger.info("Frame time: [" + self.name + "]" + str(time.time() * 1000 - self.start_time))
-        return self.last_frame
-
-    async def manipulate_frame(self, img, threshold_confidence):
-        # Run the synchronous frame manipulation function in a separate thread
-        return await asyncio.to_thread(
-            partial(self.detection_service.detect_unet, image=img, conf_th=threshold_confidence))
-
-    async def manipulate_frame_dummy(self, img, threshold_confidence):
-        await asyncio.sleep(2)
-        return await asyncio.to_thread(self.fake_detect)
-
-    def fake_detect(self):
-        return {
-            'boxes': []
-        }
-
-    async def detect_airplane_damages(self, frame, img):
-        logging.info("Detecting airplane damages.")
-        self.detection_time = time.time_ns()
-        detection_result = await asyncio.to_thread(
-            partial(self.detection_service.detect_yolo, image=img, conf_th=0.4))
-        self.frames_detection_count += 1
-        self.detection_time = time.time_ns() - self.detection_time
-
-        boxes = detection_result["boxes"]
-        logging.info(detection_result)
-        for index, box in enumerate(boxes):
-            logging.info(box)
-            logging.info(detection_result["names"][index])
-            cv2.rectangle(img, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
-            cv2.putText(img,
-                        f"{detection_result['names'][index]} - {round(detection_result['scores'][index] * 100.0)}%",
-                        (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-        img_width = img.shape[1]
-        img_height = img.shape[0]
-
-        text = f"Boxes: {len(boxes)} - Decoding: {round(self.fps_decoding, 1)} FPS - Detection: {round(self.fps_detection, 1)} FPS"
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1
-        color = (0, 255, 0)  # Green
-        thickness = 2
-
-        (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
-
-        cv2.putText(img, text, (img_width - (text_width + 20), img_height - text_height), font, 1, (0, 255, 0), 2)
-
-        new_frame = VideoFrame.from_ndarray(np.uint8(img), format="bgr24")
-        new_frame.pts = frame.pts
-        new_frame.time_base = frame.time_base
-        self.last_frame = new_frame
-        VideoTransformTrack.logger.info("Manipulated frame received")
-        self.is_processing_frame = False
-
-    async def start_manipulation_task(self, frame, normalized_img, img):
-        self.detection_time = time.time_ns()
-        detection_result = await self.manipulate_frame(normalized_img, Config.THRESHOLD_CONFIDENCE)
-        self.frames_detection_count += 1
-        self.detection_time = time.time_ns() - self.detection_time
-
-        img_width = img.shape[1]
-        img_height = img.shape[0]
-
-        mask = np.random.randint(0, len(detection_result[0]["boxes"]), 30)
-        boxes = {key: val[mask] for key, val in detection_result[0].items()}['boxes']
-
-        for box in boxes:
-            x_center = box[0]
-            y_center = box[1]
-            width = box[2]
-            height = box[3]
-
-            top_left_x = (x_center - (width / 2.0)) * img_width
-            top_left_x = 0 if top_left_x < 0 else top_left_x
-
-            top_left_y = (y_center + (height / 2.0)) * img_height
-            top_left_y = 0 if top_left_y < 0 else top_left_y
-
-            top_left = (int(top_left_x), int(top_left_y))
-
-            bottom_right_x = (x_center + (width / 2.0)) * img_width
-            bottom_right_x = 0 if bottom_right_x < 0 else bottom_right_x
-
-            bottom_right_y = (y_center - (height / 2.0)) * img_height
-            bottom_right_y = 0 if bottom_right_y < 0 else bottom_right_y
-
-            bottom_right = (int(bottom_right_x), int(bottom_right_y))
-
-            cv2.rectangle(img, top_left, bottom_right, (0, 255, 0), 2)
-
-        text = f"Boxes: {len(boxes)} - Decoding: {round(self.fps_decoding, 1)} FPS - Detection: {round(self.fps_detection, 1)} FPS"
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 1
-        color = (0, 255, 0)  # Green
-        thickness = 2
-
-        (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
-
-        cv2.putText(img, text, (img_width - (text_width + 20), img_height - text_height), font, 1, (0, 255, 0),
-                    2)
-
-        new_frame = VideoFrame.from_ndarray(np.uint8(img), format="bgr24")
-        new_frame.pts = frame.pts
-        new_frame.time_base = frame.time_base
-        self.last_frame = new_frame
-        VideoTransformTrack.logger.info("Manipulated frame received")
-        self.is_processing_frame = False
-
-    def check_for_garbage_collection(self):
-        if self.frameCounter % 100 == 0:
-            self.fps_decoding = self.frames_decoded_count / (
-                    ((time.time_ns() - self.frame_monitoring_time) + 0.000000001) / 1_000_000_000)
-            self.fps_detection = self.frames_detection_count / (
-                    ((time.time_ns() - self.frame_monitoring_time) + 0.000000001) / 1_000_000_000)
+            self.__fps_decoding = self.__decoded_incoming_frames / passed_seconds
+            self.__fps_detection = self.__transformed_frames_count / passed_seconds
 
             logging.info("###############################")
+            logging.info(f"Passed seconds: {passed_seconds}")
             logging.info(
-                f"Frames per second (Decoding): {round(self.fps_decoding, 1)}")
+                f"Frames per second (Decoding): {self.__decoded_incoming_frames}")
             logging.info(
-                f"Frames per second (Detection): {round(self.fps_detection, 1)}")
+                f"Frames per second (Decoding): {round(self.__fps_decoding, 1)}")
+            logging.info(
+                f"Frames per second (Detection): {round(self.__fps_detection, 1)}")
 
-            App.telemetry_service.fps_decoding = self.fps_decoding
-            App.telemetry_service.fps_detection = self.fps_detection
-            App.telemetry_service.detection_time = self.detection_time
+            App.telemetry_service.fps_decoding = self.__fps_decoding
+            App.telemetry_service.fps_detection = self.__fps_detection
+            App.telemetry_service.detection_time = self.__detection_time
 
-            self.frames_decoded_count = 0
-            self.frames_detection_count = 0
-            self.frame_monitoring_time = time.time_ns()
-
-        if self.frameCounter % 1000 == 0:
             gc.collect()
+            await asyncio.sleep(1)

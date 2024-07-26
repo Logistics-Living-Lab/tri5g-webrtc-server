@@ -47,7 +47,7 @@ class CustomRTCPeerConnection(RTCPeerConnection):
             self.rtt_ms = elapsed_ms
 
     def send_statistics(self, rtt_producer, fps_decoding, fps_detection, detection_time):
-        message = {
+        payload = {
             'type': 'telemetry',
             'rttProducer': rtt_producer,
             'rttConsumer': self.rtt_ms,
@@ -55,7 +55,7 @@ class CustomRTCPeerConnection(RTCPeerConnection):
             'fpsDetection': fps_detection,
             'detectionTime': detection_time
         }
-        self.__send_on_telemetry_channel(message)
+        self.__send_on_telemetry_channel(Message(payload))
 
     def __send_on_telemetry_channel(self, message: Message):
         if 'telemetry' in self.data_channels:

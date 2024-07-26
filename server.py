@@ -17,6 +17,8 @@ from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
+from video.transformers.unet_transformer import UnetTransformer
+from video.transformers.yolo_transformer import YoloTransformer
 from video.video_transform_track import VideoTransformTrack
 
 logger = logging.getLogger("pc")
@@ -72,9 +74,14 @@ async def offer_producer(request):
         if track.kind == "video":
             video_subscription = App.connection_manager.media_relay.subscribe(track)
             video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
-                                                          transform='airplane-damage',
                                                           name='cam-edge',
-                                                          detection_service=App.detection_service)
+                                                          video_transformer=YoloTransformer(App.detection_service))
+
+            # video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
+            #                                               name='cam-edge',
+            #                                               video_transformer=UnetTransformer(App.detection_service,
+            #                                                                                 confidence_threshold=0.51))
+
             peer_connection.subscriptions.append(video_subscription)
             peer_connection.subscriptions.append(video_subscription_edge)
             peer_connection.addTrack(video_subscription_edge)
@@ -86,7 +93,7 @@ async def offer_producer(request):
 
     # handle offer
     await peer_connection.setRemoteDescription(offer)
-    return await App.connection_manager.__create_sdp_response_for_peer_connection(peer_connection)
+    return await App.connection_manager.create_sdp_response_for_peer_connection(peer_connection)
 
 
 async def offer_consumer(request):
@@ -94,16 +101,6 @@ async def offer_consumer(request):
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
     consumer_peer_connection = App.connection_manager.create_peer_connection(connection_type="consumer")
-    # @consumer_peer_connection.on("datachannel")
-    # def on_datachannel(channel):
-    #     @channel.on("message")
-    #     def on_message(message_json):
-    #         message = Message.from_json(message_json)
-    #         if message.payload["type"] == "rtt":
-    #             App.message_service.send_message(message)
-
-    # data_channel = consumer_peer_connection.createDataChannel('foobar')
-    # App.connection_manager.register_data_channel_listeners(consumer_peer_connection, data_channel)
 
     producer_peer_connection = App.connection_manager.get_primary_producer_connection()
     track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0])
@@ -115,7 +112,7 @@ async def offer_consumer(request):
     # handle offer
 
     await consumer_peer_connection.setRemoteDescription(offer)
-    return await App.connection_manager.__create_sdp_response_for_peer_connection(consumer_peer_connection)
+    return await App.connection_manager.create_sdp_response_for_peer_connection(consumer_peer_connection)
 
 
 async def on_shutdown(app):

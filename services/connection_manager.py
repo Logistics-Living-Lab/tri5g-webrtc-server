@@ -61,7 +61,7 @@ class ConnectionManager:
         self.register_peer_connection(peer_connection)
         return peer_connection
 
-    async def __create_sdp_response_for_peer_connection(self, peer_connection: CustomRTCPeerConnection):
+    async def create_sdp_response_for_peer_connection(self, peer_connection: CustomRTCPeerConnection):
         answer = await peer_connection.createAnswer()
         await peer_connection.setLocalDescription(answer)
 
