@@ -87,7 +87,7 @@ async def offer_producer(request):
 
     # handle offer
     await peer_connection.setRemoteDescription(offer)
-    return await App.connection_manager.create_sdp_response_for_peer_connection(peer_connection)
+    return await App.connection_manager.__create_sdp_response_for_peer_connection(peer_connection)
 
 
 async def offer_consumer(request):
@@ -116,7 +116,7 @@ async def offer_consumer(request):
     # handle offer
 
     await consumer_peer_connection.setRemoteDescription(offer)
-    return await App.connection_manager.create_sdp_response_for_peer_connection(consumer_peer_connection)
+    return await App.connection_manager.__create_sdp_response_for_peer_connection(consumer_peer_connection)
 
 
 async def on_shutdown(app):

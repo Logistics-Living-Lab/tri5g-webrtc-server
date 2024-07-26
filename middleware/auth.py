@@ -12,8 +12,8 @@ from config.app_config import AppConfig
 class Auth:
 
     def __init__(self, auth_file):
-        self.auth_file = auth_file
         self.logger = logging.getLogger(__name__)
+        self.auth_file = auth_file
 
     @web.middleware
     async def basic_auth_middleware(self, request, handler):

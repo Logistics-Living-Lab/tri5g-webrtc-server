@@ -16,6 +16,7 @@ class ConnectionManager:
     STUN_SERVERS = "stun:stun.l.google.com:19302"
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.__peer_connections_producer = list[CustomRTCPeerConnection]()
         self.__peer_connections_consumer = list[CustomRTCPeerConnection]()
         self.media_relay: MediaRelay = MediaRelay()
@@ -55,12 +56,12 @@ class ConnectionManager:
         )
         peer_connection = CustomRTCPeerConnection(id=str(uuid.uuid4()), connection_type=connection_type,
                                                   configuration=configuration)
-        self.register_state_change_listener(peer_connection)
-        self.register_peer_connection_incoming_data_channel_listener(peer_connection)
+        self.__register_connection_state_change_listener(peer_connection)
+        self.__register_peer_connection_incoming_data_channel_listener(peer_connection)
         self.register_peer_connection(peer_connection)
         return peer_connection
 
-    async def create_sdp_response_for_peer_connection(self, peer_connection: CustomRTCPeerConnection):
+    async def __create_sdp_response_for_peer_connection(self, peer_connection: CustomRTCPeerConnection):
         answer = await peer_connection.createAnswer()
         await peer_connection.setLocalDescription(answer)
 
@@ -71,24 +72,24 @@ class ConnectionManager:
             ),
         )
 
-    def register_state_change_listener(self, peer_connection: CustomRTCPeerConnection):
+    def __register_connection_state_change_listener(self, peer_connection: CustomRTCPeerConnection):
         @peer_connection.on('connectionstatechange')
         async def on_connection_state_change():
-            logging.info(f"Connection state: {peer_connection.connectionState}")
+            self.logger.info(
+                f"Peer Connection: {peer_connection.id} - Connection state: {peer_connection.connectionState}")
             if peer_connection.connectionState == "closed" or peer_connection.connectionState == "failed":
                 await peer_connection.close()
                 self.unregister_peer_connection(peer_connection)
 
         @peer_connection.on('iceConnectionState')
         async def on_ice_connection_state_change():
-            logging.info(f"ICE Connection state: {peer_connection.iceConnectionState}")
+            self.logger.info(
+                f"Peer Connection: {peer_connection.id} - ICE Connection state: {peer_connection.iceConnectionState}")
 
-    def register_peer_connection_incoming_data_channel_listener(self, peer_connection: CustomRTCPeerConnection):
-        logging.info(f"register_data_channel_listeners")
-
+    def __register_peer_connection_incoming_data_channel_listener(self, peer_connection: CustomRTCPeerConnection):
         @peer_connection.on("datachannel")
         def on_datachannel(channel: RTCDataChannel):
-            self.register_data_channel_listeners(peer_connection, channel)
+            self.__register_data_channel_listeners(peer_connection, channel)
 
     def get_primary_producer_connection(self):
         if len(self.__peer_connections_producer) == 0:
@@ -96,20 +97,20 @@ class ConnectionManager:
         return self.__peer_connections_producer[0]
 
     def __print_connections_info(self):
-        logging.info(f"Producers: {len(self.__peer_connections_producer)}")
-        logging.info(f"Consumers: {len(self.__peer_connections_consumer)}")
+        self.logger.info(f"Producers: {len(self.__peer_connections_producer)}")
+        self.logger.info(f"Consumers: {len(self.__peer_connections_consumer)}")
 
-    def register_data_channel_listeners(self, peer_connection, channel):
+    def __register_data_channel_listeners(self, peer_connection, channel):
         @channel.on("open")
         def on_channel_open():
-            logging.info("Channel - open")
+            self.logger.info(f"Peer Connection: {peer_connection.id} - Data channel {channel.label} - open")
             peer_connection.data_channels[channel.label] = channel
 
         @channel.on("close")
         def on_channel_close():
-            logging.info("Channel - close")
+            self.logger.info(f"Peer Connection: {peer_connection.id} - Data channel {channel.label} - close")
             peer_connection.data_channels.pop(channel.label)
-            # Channel is already openend when "datachannel" event is emitted
 
+        # If datachannel is initiated by remote peer - it is already open - handler has to be called manually
         if channel.readyState == 'open':
             on_channel_open()
