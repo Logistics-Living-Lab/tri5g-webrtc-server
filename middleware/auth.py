@@ -13,6 +13,7 @@ class Auth:
 
     def __init__(self, auth_file):
         self.auth_file = auth_file
+        self.logger = logging.getLogger(__name__)
 
     @web.middleware
     async def basic_auth_middleware(self, request, handler):
@@ -37,7 +38,7 @@ class Auth:
         users = self.__load_user_from_file()
         existing_user = self.get_user(username)
         if existing_user:
-            logging.error(f"User [{username}] already exists.")
+            self.logger.error(f"User [{username}] already exists.")
             return
 
         hashed_password = bcrypt.hashpw(bytes(password, 'utf-8'), bcrypt.gensalt())
@@ -51,11 +52,11 @@ class Auth:
 
     def update_user(self, username: str, password: str):
         if not self.get_user(username):
-            logging.error(f"User [{username}] does not exist.")
+            self.logger.error(f"User [{username}] does not exist.")
             return
         self.delete_user(username)
         self.create_user(username, password)
-        logging.info(f"User [{username}] updated.")
+        self.logger.info(f"User [{username}] updated.")
 
     def delete_user(self, username: str):
         users = self.__load_user_from_file()
@@ -65,7 +66,7 @@ class Auth:
 
         with open(self.auth_file, 'w') as f:
             f.write(json.dumps(users))
-        logging.info(f"User [{username}] deleted.")
+        self.logger.info(f"User [{username}] deleted.")
 
     def get_user(self, username: str):
         users = self.__load_user_from_file()
@@ -87,7 +88,7 @@ class Auth:
     def check_credentials(self, username, password):
         user = self.get_user(username)
         if not user:
-            logging.error(f"User [{username}] does not exist.")
+            self.logger.error(f"User [{username}] does not exist.")
             return False
 
         return bcrypt.checkpw(password.encode('utf-8'), user["password"].encode('utf-8'))
