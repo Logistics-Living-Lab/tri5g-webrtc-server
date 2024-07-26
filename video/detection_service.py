@@ -14,7 +14,7 @@ class DetectionService:
 
     def __init__(self):
         self.device = "cpu"
-        self.yolo_model = YOLO(f"{AppConfig.root_path}/models/{AppConfig.damage_detection_model_file}")
+        self.yolo_model = YOLO(f"{AppConfig.root_path}/models/{AppConfig.damage_detection_model_file}", task='detect')
         self.unet_detector: DetectionModule | None = None
 
     def load_unet_detector(self, model_dir_path, config_file_name="cfg.yaml"):

@@ -13,6 +13,7 @@ from aiortc.contrib.media import MediaRelay
 
 from config.app_config import AppConfig
 from config.app import App
+from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.message import Message
 from services.message_service import MessageService
@@ -123,16 +124,24 @@ async def on_shutdown(app):
     await App.connection_manager.shutdown()
 
 
-def init_app():
+def init_app_services():
+    App.connection_manager = ConnectionManager()
+    App.message_service = MessageService(App.connection_manager)
+    App.telemetry_service = TelemetryService(App.message_service, App.connection_manager)
+    App.auth_service = Auth(os.path.join(AppConfig.root_path, "auth.json"))
+
+
+def init_web_app():
+    if torch.cuda.is_available():
+        logging.info("CUDA is available 🚀🚀🚀")
+    else:
+        logging.info("CUDA is not available 🐌🐌🐌")
+
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
 
     app = web.Application()
-
-    init_detection_module()
-    App.connection_manager = ConnectionManager()
-    App.message_service = MessageService(App.connection_manager)
-    App.telemetry_service = TelemetryService(App.message_service, App.connection_manager)
+    app.middlewares.append(App.auth_service.basic_auth_middleware)
 
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/" + args.url_key, tailwind)
@@ -148,6 +157,38 @@ async def on_startup(app):
     asyncio.create_task(App.telemetry_service.start())
 
 
+def check_if_user_mode():
+    if args.create_user:
+        logging.info(f"Creating user {args.username} ...")
+        if not args.username:
+            logging.error("Provide username (--username)!")
+            exit(-1)
+        if not args.password:
+            logging.error("Provide password (--password)!")
+            exit(-1)
+        App.auth_service.create_user(args.username, args.password)
+        exit(0)
+
+    if args.delete_user:
+        logging.info(f"Deleting user {args.username} ...")
+        if not args.username:
+            logging.error("Provide username (--username)!")
+            exit(-1)
+        App.auth_service.delete_user(args.username)
+        exit(0)
+
+    if args.update_user:
+        logging.info(f"Updating user {args.username} ...")
+        if not args.username:
+            logging.error("Provide username (--username)!")
+            exit(-1)
+        if not args.password:
+            logging.error("Provide password (--password)!")
+            exit(-1)
+        App.auth_service.update_user(args.username, args.password)
+        exit(0)
+
+
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(
@@ -157,11 +198,6 @@ if __name__ == "__main__":
 
     AppConfig.root_path = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"{os.path.dirname(os.path.abspath(__file__))}")
-
-    if torch.cuda.is_available():
-        logging.info("CUDA is available 🚀🚀🚀")
-    else:
-        logging.info("CUDA is not available 🐌🐌🐌")
 
     parser = argparse.ArgumentParser(
         description="WebRTC audio / video / data-channels demo"
@@ -178,9 +214,21 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", "-v", action="count")
     parser.add_argument("--url-key", help="String for URL disguise", default="", type=str)
     parser.add_argument("--damage-model-file", help="Model file to use for airplane damage detection", type=str)
+
+    parser.add_argument("--create-user", help="Create user", action='store_true')
+    parser.add_argument("--delete-user", help="Delete user", action='store_true')
+    parser.add_argument("--update-user", help="Update user password", action='store_true')
+    parser.add_argument("--username", help="Username", type=str)
+    parser.add_argument("--password", help="password", type=str)
+
     args = parser.parse_args()
 
+    init_app_services()
+    check_if_user_mode()
+
     AppConfig.damage_detection_model_file = args.damage_model_file
+    init_detection_module()
+    app = init_web_app()
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -193,7 +241,6 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
-    app = init_app()
     app.on_startup.append(on_startup)
 
     web.run_app(
