@@ -1,4 +1,4 @@
-import json
+import logging
 import time
 from typing import Literal
 
@@ -10,6 +10,7 @@ from services.message import Message
 class CustomRTCPeerConnection(RTCPeerConnection):
     def __init__(self, id: str, connection_type: Literal['producer', 'consumer'], *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.logger = logging.getLogger(__name__)
         self.id = id
         self.connection_type = connection_type
         self.subscriptions = list()
@@ -30,11 +31,11 @@ class CustomRTCPeerConnection(RTCPeerConnection):
         return data_channel
 
     def send_rtt_packet(self):
-        message = {
+        payload = {
             'timestamp': self.__current_timestamp_millis(),
             'type': 'rtt-packet'
         }
-        self.__send_on_telemetry_channel(message)
+        self.__send_on_telemetry_channel(Message(payload))
 
     def __current_timestamp_millis(self):
         return time.time_ns() // 1_000_000
@@ -56,9 +57,9 @@ class CustomRTCPeerConnection(RTCPeerConnection):
         }
         self.__send_on_telemetry_channel(message)
 
-    def __send_on_telemetry_channel(self, message: dict):
+    def __send_on_telemetry_channel(self, message: Message):
         if 'telemetry' in self.data_channels:
             telemetry_data_channel = self.data_channels['telemetry']
             if telemetry_data_channel is not None and telemetry_data_channel.readyState == 'open':
-                message['connectionId'] = self.id
-                telemetry_data_channel.send(json.dumps(message))
+                message.payload['connectionId'] = self.id
+                telemetry_data_channel.send(message.to_json())

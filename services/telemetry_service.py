@@ -2,12 +2,11 @@ import asyncio
 import logging
 
 from services.connection_manager import ConnectionManager
-from services.message import Message
-from services.message_service import MessageService
 
 
 class TelemetryService:
-    def __init__(self, message_service: MessageService, connection_manager: ConnectionManager):
+    def __init__(self, connection_manager: ConnectionManager):
+        self.logger = logging.getLogger(__name__)
         self.__connection_manager = connection_manager
         self.rtt_camera = 0
         self.fps_decoding = 0
