@@ -22,7 +22,7 @@ class YoloTransformer(VideoTransformer):
         resized_img = cv2.resize(img, (960, 960))
         return await self.detect(frame, img, resized_img)
 
-    async def detect_dummy(self, frame : VideoFrame, img, resized_img):
+    async def detect_dummy(self, frame: VideoFrame, img, resized_img):
         await asyncio.sleep(1)
         return frame
 
@@ -30,8 +30,7 @@ class YoloTransformer(VideoTransformer):
         self.logger.info("Detecting damages...")
         self._start_detection_time = time.time_ns()
 
-        detection_result = await asyncio.to_thread(
-            partial(self.detection_service.detect_yolo, image=resized_img, conf_th=0.4))
+        detection_result = await self.detection_service.detect_yolo(image=resized_img, conf_th=0.4)
 
         self.frames_detection_count += 1
         self.measured_detection_time_ms = (time.time_ns() - self._start_detection_time) // 1_000_000
