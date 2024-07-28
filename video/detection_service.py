@@ -27,14 +27,14 @@ class DetectionService:
         self.logger.info(f"Loaded unet model config: {model_dir_path}/{config_file_name}")
 
     def load_yolo(self, model_file: str):
-        self.yolo_model = YOLO(model_file, task='detect')
+        self.yolo_model = YOLO(model_file, task='detect', verbose=False)
         self.logger.info(f"Loaded yolo model: {model_file}")
 
     def detect_unet(self, image, conf_th):
         return self.unet_detector.forward(image, conf_th=conf_th, device=self.device)
 
     def detect_yolo(self, image, conf_th):
-        yolo_result = self.yolo_model(image, conf=conf_th)[0]
+        yolo_result = self.yolo_model.predict(image, conf=conf_th, verbose=False)[0]
 
         # postprocessing output
         results = self.adjust_output(yolo_result)
