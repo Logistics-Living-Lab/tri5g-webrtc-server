@@ -6,6 +6,7 @@ from asyncio import Task
 
 from aiortc import MediaStreamTrack
 from av import VideoFrame
+from memory_profiler import profile
 
 from config.app import App
 from video.transformers.video_transformer import VideoTransformer
@@ -23,8 +24,8 @@ class VideoTransformTrack(MediaStreamTrack):
 
         self.__is_processing_frame = False
         self.__current_frame = None
-        self.__transformation_task: Task | None = None
-        self.__telemetry_task: Task | None = None
+        self.__transformation_task: asyncio.Task | None = None
+        self.__telemetry_task: asyncio.Task | None = None
         self.__timestamp_start_ns = None
         self.__decoded_incoming_frames = 0
         self.__transformed_frames_count = 0
@@ -46,16 +47,12 @@ class VideoTransformTrack(MediaStreamTrack):
         if self.__telemetry_task:
             self.__telemetry_task.cancel()
 
-    async def start_telemetry_task(self):
-        self.__telemetry_task = self.check_for_garbage_collection()
-        await self.check_for_garbage_collection()
-
     async def recv(self):
         if self.__timestamp_start_ns is None:
             self.__timestamp_start_ns = time.time_ns()
 
         if not self.__telemetry_task:
-            asyncio.create_task(self.start_telemetry_task())
+            self.__telemetry_task = asyncio.create_task(self.check_for_garbage_collection())
 
         frame = await self.track.recv()
         self.__decoded_incoming_frames += 1

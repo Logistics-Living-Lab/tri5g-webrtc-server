@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+from memory_profiler import memory_usage
+
 from services.connection_manager import ConnectionManager
 
 
@@ -15,11 +17,11 @@ class TelemetryService:
         self.send_telemetry_task: asyncio.Task | None = None
 
     async def start(self):
-        self.send_telemetry_task = self.__send_statistics()
-        await self.send_telemetry_task
+        self.send_telemetry_task = await self.__send_statistics()
 
     def shutdown(self):
-        self.send_telemetry_task.cancel()
+        if self.send_telemetry_task:
+            self.send_telemetry_task.cancel()
 
     async def __send_statistics(self):
         while True:
@@ -30,4 +32,5 @@ class TelemetryService:
             for connection in self.__connection_manager.get_all_connections():
                 connection.send_rtt_packet()
                 connection.send_statistics(self.rtt_camera, self.fps_decoding, self.fps_detection, self.detection_time)
+            self.logger.info(f"Memory usage: {memory_usage()[0]}")
             await asyncio.sleep(1)

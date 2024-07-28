@@ -4,10 +4,15 @@ import json
 import logging
 import os
 import ssl
+import cProfile
+import pstats
+import io
+import av
 import uuid
 
 import torch
 from aiohttp import web
+from aiohttp.web_runner import GracefulExit
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, RTCDataChannel
 from aiortc.contrib.media import MediaRelay
 
@@ -20,8 +25,12 @@ from video.detection_service import DetectionService
 from video.transformers.unet_transformer import UnetTransformer
 from video.transformers.yolo_transformer import YoloTransformer
 from video.video_transform_track import VideoTransformTrack
+from memory_profiler import profile, memory_usage
 
 logger = logging.getLogger("pc")
+
+profiler = None
+args = None
 
 
 def init_detection_module():
@@ -97,6 +106,7 @@ async def offer_producer(request):
 
 
 async def offer_consumer(request):
+    logging.info(f"Current memory usage {memory_usage()[0]} MB")
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
@@ -118,6 +128,29 @@ async def offer_consumer(request):
 async def on_shutdown(app):
     App.telemetry_service.shutdown()
     await App.connection_manager.shutdown()
+    profiler.disable()
+    s = io.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print(s.getvalue())
+    with open("mprof.out", 'w') as f:
+        f.write(s.getvalue())
+    loop = asyncio.get_event_loop()
+    pending = asyncio.all_tasks(loop=loop)
+    for task in pending:
+        task.cancel()
+        try:
+            # Await the task to handle the cancellation properly
+            logging.info(f"Awating {task.get_name()}")
+            await task
+            logging.info(f"{task.get_name()}: {task.done()}")
+        except asyncio.CancelledError:
+            logging.info(f"Task [{task.get_name()}] cancellation handled")
+
+    pending = asyncio.all_tasks(loop=loop)
+    for task in pending:
+        await task
 
 
 def init_app_services():
@@ -150,6 +183,7 @@ def init_web_app():
 
 async def on_startup(app):
     asyncio.create_task(App.telemetry_service.start())
+    logging.info("")
 
 
 def check_if_user_mode():
@@ -184,12 +218,19 @@ def check_if_user_mode():
         exit(0)
 
 
-if __name__ == "__main__":
+# @profile
+def main():
+    global profiler
+    profiler = cProfile.Profile()
+    profiler.enable()
     # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(
-        format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
+        format='%(asctime)s.%(msecs)03d | %(name)s | %(levelname)-8s %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
+
+    av.logging.set_level(av.logging.CRITICAL)
+    logging.getLogger("aioice.ice").setLevel(logging.ERROR)
 
     AppConfig.root_path = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"{os.path.dirname(os.path.abspath(__file__))}")
@@ -215,6 +256,7 @@ if __name__ == "__main__":
     parser.add_argument("--username", help="Username", type=str)
     parser.add_argument("--password", help="password", type=str)
 
+    global args
     args = parser.parse_args()
 
     init_app_services()
@@ -240,3 +282,7 @@ if __name__ == "__main__":
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
     )
+
+
+if __name__ == "__main__":
+    main()
