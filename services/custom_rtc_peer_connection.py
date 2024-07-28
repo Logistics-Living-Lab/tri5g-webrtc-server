@@ -30,7 +30,7 @@ class CustomRTCPeerConnection(RTCPeerConnection):
         self.data_channels[label] = data_channel
         return data_channel
 
-    def send_rtt_packet(self):
+    async def send_rtt_packet(self):
         payload = {
             'timestamp': self.__current_timestamp_millis(),
             'type': 'rtt-packet'
@@ -46,7 +46,7 @@ class CustomRTCPeerConnection(RTCPeerConnection):
             elapsed_ms = self.__current_timestamp_millis() - message.payload["timestamp"]
             self.rtt_ms = elapsed_ms
 
-    def send_statistics(self, rtt_producer, fps_decoding, fps_detection, detection_time):
+    async def send_statistics(self, rtt_producer, fps_decoding, fps_detection, detection_time):
         payload = {
             'type': 'telemetry',
             'rttProducer': rtt_producer,

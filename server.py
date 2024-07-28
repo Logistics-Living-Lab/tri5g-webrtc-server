@@ -81,7 +81,8 @@ async def offer_producer(request):
         logging.info("Track %s received", track.kind)
 
         if track.kind == "video":
-            video_subscription = App.connection_manager.media_relay.subscribe(track)
+            video_subscription = App.connection_manager.media_relay.subscribe(track, buffered=True)
+            # video_subscription_edge = App.connection_manager.media_relay.subscribe(track, buffered=True)
             video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
                                                           name='cam-edge',
                                                           video_transformer=YoloTransformer(App.detection_service))
@@ -113,8 +114,8 @@ async def offer_consumer(request):
     consumer_peer_connection = App.connection_manager.create_peer_connection(connection_type="consumer")
 
     producer_peer_connection = App.connection_manager.get_primary_producer_connection()
-    track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=False)
-    track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=False)
+    track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=True)
+    track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=True)
 
     consumer_peer_connection.addTrack(track1)
     consumer_peer_connection.addTrack(track2)

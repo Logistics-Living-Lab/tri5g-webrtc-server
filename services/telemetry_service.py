@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import logging
 
 from memory_profiler import memory_usage
@@ -17,7 +18,7 @@ class TelemetryService:
         self.send_telemetry_task: asyncio.Task | None = None
 
     async def start(self):
-        self.send_telemetry_task = await self.__send_statistics()
+        self.send_telemetry_task = asyncio.create_task(self.__send_statistics())
 
     def shutdown(self):
         if self.send_telemetry_task:
@@ -25,12 +26,19 @@ class TelemetryService:
 
     async def __send_statistics(self):
         while True:
+            gc.collect()
             producer_connection = self.__connection_manager.get_primary_producer_connection()
             if producer_connection is not None:
                 self.rtt_camera = producer_connection.rtt_ms
 
+            coros = []
             for connection in self.__connection_manager.get_all_connections():
-                connection.send_rtt_packet()
-                connection.send_statistics(self.rtt_camera, self.fps_decoding, self.fps_detection, self.detection_time)
+                coros.append(asyncio.create_task(connection.send_rtt_packet()))
+                coros.append(asyncio.create_task(
+                    connection.send_statistics(self.rtt_camera, self.fps_decoding, self.fps_detection,
+                                               self.detection_time)))
+
+            await asyncio.gather(*coros)
+
             self.logger.info(f"Memory usage: {memory_usage()[0]}")
             await asyncio.sleep(1)
