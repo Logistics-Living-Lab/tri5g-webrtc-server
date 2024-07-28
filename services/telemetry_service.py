@@ -25,8 +25,9 @@ class TelemetryService:
             self.send_telemetry_task.cancel()
 
     async def __send_statistics(self):
+        count = 0
         while True:
-            gc.collect()
+            count += 1
             producer_connection = self.__connection_manager.get_primary_producer_connection()
             if producer_connection is not None:
                 self.rtt_camera = producer_connection.rtt_ms
@@ -39,6 +40,9 @@ class TelemetryService:
                                                self.detection_time)))
 
             await asyncio.gather(*coros)
-
-            self.logger.info(f"Memory usage: {memory_usage()[0]}")
+            if count % 10 == 0:
+                gc.collect()
+                self.logger.info("#################")
+                self.logger.info(f"Memory usage: {memory_usage()[0]}")
+                self.logger.info("#################")
             await asyncio.sleep(1)

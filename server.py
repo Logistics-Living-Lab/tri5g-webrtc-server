@@ -81,9 +81,9 @@ async def offer_producer(request):
         logging.info("Track %s received", track.kind)
 
         if track.kind == "video":
-            video_subscription = App.connection_manager.media_relay.subscribe(track, buffered=True)
+            video_subscription = App.connection_manager.media_relay.subscribe(track, buffered=False)
             # video_subscription_edge = App.connection_manager.media_relay.subscribe(track, buffered=True)
-            video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
+            video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=False),
                                                           name='cam-edge',
                                                           video_transformer=YoloTransformer(App.detection_service))
 
@@ -223,7 +223,7 @@ def check_if_user_mode():
 def main():
     global profiler
     profiler = cProfile.Profile()
-    profiler.enable()
+    # profiler.enable()
     # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(
         format='%(asctime)s.%(msecs)03d | %(name)s | %(levelname)-8s %(message)s',

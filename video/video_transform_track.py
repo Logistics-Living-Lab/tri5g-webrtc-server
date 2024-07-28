@@ -90,5 +90,4 @@ class VideoTransformTrack(MediaStreamTrack):
             App.telemetry_service.fps_detection = self.__fps_detection
             App.telemetry_service.detection_time = self.__detection_time
 
-            gc.collect()
             await asyncio.sleep(1)

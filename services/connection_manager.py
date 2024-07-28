@@ -52,8 +52,6 @@ class ConnectionManager:
         return len(self.__peer_connections_producer) >= ConnectionManager.MAX_PRODUCER_CONNECTIONS
 
     def create_peer_connection(self, connection_type: Literal['producer', 'consumer']) -> CustomRTCPeerConnection:
-        self.logger.info(f"Memory usage: {memory_usage()[0]}")
-
         configuration = RTCConfiguration(
             iceServers=[RTCIceServer(urls=ConnectionManager.STUN_SERVERS)]
         )
@@ -78,7 +76,6 @@ class ConnectionManager:
     def __register_connection_state_change_listener(self, peer_connection: CustomRTCPeerConnection):
         @peer_connection.on('connectionstatechange')
         async def on_connection_state_change():
-            self.logger.info(f"Memory usage: {memory_usage()[0]}")
             self.logger.info(
                 f"Peer Connection: {peer_connection.id} - Connection state: {peer_connection.connectionState}")
             if peer_connection.connectionState == "closed" or peer_connection.connectionState == "failed":
@@ -87,14 +84,12 @@ class ConnectionManager:
 
         @peer_connection.on('iceConnectionState')
         async def on_ice_connection_state_change():
-            self.logger.info(f"Memory usage: {memory_usage()[0]}")
             self.logger.info(
                 f"Peer Connection: {peer_connection.id} - ICE Connection state: {peer_connection.iceConnectionState}")
 
     def __register_peer_connection_incoming_data_channel_listener(self, peer_connection: CustomRTCPeerConnection):
         @peer_connection.on("datachannel")
         def on_datachannel(channel: RTCDataChannel):
-            self.logger.info(f"Memory usage: {memory_usage()[0]}")
             self.__register_data_channel_listeners(peer_connection, channel)
 
     def get_primary_producer_connection(self):
