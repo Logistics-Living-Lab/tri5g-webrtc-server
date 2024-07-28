@@ -20,7 +20,7 @@ class YoloTransformer(VideoTransformer):
     async def transform_frame_task(self, frame) -> VideoFrame:
         img = frame.to_ndarray(format="bgr24")
         resized_img = cv2.resize(img, (960, 960))
-        return await self.detect_dummy(frame, img, resized_img)
+        return await self.detect(frame, img, resized_img)
 
     async def detect_dummy(self, frame : VideoFrame, img, resized_img):
         await asyncio.sleep(1)
