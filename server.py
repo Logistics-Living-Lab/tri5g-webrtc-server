@@ -114,12 +114,14 @@ async def offer_consumer(request):
     consumer_peer_connection = App.connection_manager.create_peer_connection(connection_type="consumer")
 
     producer_peer_connection = App.connection_manager.get_primary_producer_connection()
-    track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=True)
-    track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=True)
+    # track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=True)
+    track1 = producer_peer_connection.subscriptions[0]
+    # track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=True)
+    track2 = producer_peer_connection.subscriptions[1]
 
     consumer_peer_connection.addTrack(track1)
     consumer_peer_connection.addTrack(track2)
-
+    ConnectionManager.force_codec(consumer_peer_connection, "video/H264")
     # handle offer
 
     await consumer_peer_connection.setRemoteDescription(offer)

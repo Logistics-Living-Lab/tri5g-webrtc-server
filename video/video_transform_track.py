@@ -54,7 +54,7 @@ class VideoTransformTrack(MediaStreamTrack):
         if not self.__telemetry_task:
             self.__telemetry_task = asyncio.create_task(self.check_for_garbage_collection())
 
-        frame = await self.track.recv()
+        frame: VideoFrame = await self.track.recv()
         self.__decoded_incoming_frames += 1
 
         # Only on first run, ensure that last_frame is not empty

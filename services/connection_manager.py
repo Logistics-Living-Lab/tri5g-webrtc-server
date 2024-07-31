@@ -5,7 +5,7 @@ import uuid
 from typing import Literal
 
 from aiohttp import web
-from aiortc import RTCPeerConnection, RTCConfiguration, RTCIceServer, RTCDataChannel
+from aiortc import RTCPeerConnection, RTCConfiguration, RTCIceServer, RTCDataChannel, RTCRtpSender
 from aiortc.contrib.media import MediaRelay
 from memory_profiler import memory_usage
 
@@ -115,3 +115,15 @@ class ConnectionManager:
         # If datachannel is initiated by remote peer - it is already open - handler has to be called manually
         if channel.readyState == 'open':
             on_channel_open()
+
+    @staticmethod
+    def force_codec(pc, forced_codec):
+        codecs = RTCRtpSender.getCapabilities('video').codecs
+        h264_codecs = [codec for codec in codecs if codec.mimeType == forced_codec]
+        if len(h264_codecs) == 0:
+            logging.info("No H264 codecs found.")
+            return
+
+        for transceiver in pc.getTransceivers():
+            if transceiver.kind == "video":
+                transceiver.setCodecPreferences(h264_codecs)
