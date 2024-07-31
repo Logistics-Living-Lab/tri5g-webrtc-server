@@ -14,7 +14,7 @@ from services.custom_rtc_peer_connection import CustomRTCPeerConnection
 
 class ConnectionManager:
     MAX_PRODUCER_CONNECTIONS = 1
-    STUN_SERVERS = "stun:stun.l.google.com:19302"
+    STUN_SERVERS = "ec2-15-145-19-244.eu-central-1.compute.amazonaws.com:3478"
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
