@@ -7,14 +7,12 @@ import ssl
 import cProfile
 import pstats
 import io
+
 import av
-import uuid
 
 import torch
 from aiohttp import web
-from aiohttp.web_runner import GracefulExit
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, RTCDataChannel
-from aiortc.contrib.media import MediaRelay
+from aiortc import RTCSessionDescription, RTCDataChannel
 
 from config.app_config import AppConfig
 from config.app import App
@@ -22,10 +20,9 @@ from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
-from video.transformers.unet_transformer import UnetTransformer
 from video.transformers.yolo_transformer import YoloTransformer
 from video.video_transform_track import VideoTransformTrack
-from memory_profiler import profile, memory_usage
+from memory_profiler import memory_usage
 
 logger = logging.getLogger("pc")
 
@@ -83,9 +80,10 @@ async def offer_producer(request):
         if track.kind == "video":
             video_subscription = App.connection_manager.media_relay.subscribe(track, buffered=False)
             # video_subscription_edge = App.connection_manager.media_relay.subscribe(track, buffered=True)
-            video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=False),
-                                                          name='cam-edge',
-                                                          video_transformer=YoloTransformer(App.detection_service))
+            video_subscription_edge = VideoTransformTrack(
+                App.connection_manager.media_relay.subscribe(track, buffered=False),
+                name='cam-edge',
+                video_transformer=YoloTransformer(App.detection_service))
 
             # video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
             #                                               name='cam-edge',
@@ -225,6 +223,7 @@ def check_if_user_mode():
 def main():
     global profiler
     profiler = cProfile.Profile()
+
     # profiler.enable()
     # logging.basicConfig(level=logging.DEBUG)
     logging.basicConfig(
