@@ -22,11 +22,11 @@ class YoloTransformer(VideoTransformer):
         img = frame.to_ndarray(format="bgr24")
         return await self.detect(frame, img)
 
-    async def detect_dummy(self, frame: VideoFrame, img, resized_img):
+    async def detect_dummy(self, frame: VideoFrame, img):
         await asyncio.sleep(1)
         return frame
 
-    async def detect(self, frame, img, resized_img) -> VideoFrame:
+    async def detect(self, frame, img) -> VideoFrame:
         self.logger.info("Detecting damages...")
         self._start_detection_time = time.time_ns()
         img = await self.detection_service.detect_yolo_as_image(img)
