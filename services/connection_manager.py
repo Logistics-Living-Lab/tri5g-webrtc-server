@@ -14,10 +14,10 @@ from services.custom_rtc_peer_connection import CustomRTCPeerConnection
 
 class ConnectionManager:
     MAX_PRODUCER_CONNECTIONS = 1
-    STUN_SERVERS = "stun:stun.l.google.com:19302"
 
-    def __init__(self):
+    def __init__(self, stun_server):
         self.logger = logging.getLogger(__name__)
+        self.__stun_server = stun_server
         self.__peer_connections_producer = list[CustomRTCPeerConnection]()
         self.__peer_connections_consumer = list[CustomRTCPeerConnection]()
         self.media_relay: MediaRelay = MediaRelay()
@@ -53,7 +53,7 @@ class ConnectionManager:
 
     def create_peer_connection(self, connection_type: Literal['producer', 'consumer']) -> CustomRTCPeerConnection:
         configuration = RTCConfiguration(
-            iceServers=[RTCIceServer(urls=ConnectionManager.STUN_SERVERS)]
+            iceServers=[RTCIceServer(urls=self.__stun_server)]
         )
         peer_connection = CustomRTCPeerConnection(id=str(uuid.uuid4()), connection_type=connection_type,
                                                   configuration=configuration)

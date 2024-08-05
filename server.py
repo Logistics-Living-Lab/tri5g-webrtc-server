@@ -154,8 +154,8 @@ async def on_shutdown(app):
         await task
 
 
-def init_app_services():
-    App.connection_manager = ConnectionManager()
+def init_app_services(stun_server):
+    App.connection_manager = ConnectionManager(stun_server)
     App.telemetry_service = TelemetryService(App.connection_manager)
     App.auth_service = Auth(os.path.join(AppConfig.root_path, "auth.json"))
 
@@ -257,11 +257,13 @@ def main():
     parser.add_argument("--update-user", help="Update user password", action='store_true')
     parser.add_argument("--username", help="Username", type=str)
     parser.add_argument("--password", help="password", type=str)
+    parser.add_argument("--stun-server", help="STUN Server", type=str, default="stun:stun.l.google.com:19302")
 
     global args
     args = parser.parse_args()
 
-    init_app_services()
+    init_app_services(args.stun_server)
+    logging.info(f"Using STUN SERVER: {args.stun_server}")
     check_if_user_mode()
 
     AppConfig.damage_detection_model_file = args.damage_model_file
