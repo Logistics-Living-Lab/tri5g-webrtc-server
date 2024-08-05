@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import base64
 import json
 import logging
 import os
@@ -9,6 +10,8 @@ import pstats
 import io
 
 import av
+import cv2
+import numpy as np
 
 import torch
 from aiohttp import web
@@ -29,6 +32,19 @@ logger = logging.getLogger("pc")
 profiler = None
 args = None
 
+MAX_WIDTH = 1600
+MAX_HEIGHT = 1600
+
+def rescale_image(image, max_width, max_height):
+    height, width = image.shape[:2]
+    if width > max_width or height > max_height:
+        # Calculate the scaling factor while maintaining the aspect ratio
+        scaling_factor = min(max_width / width, max_height / height)
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+        resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        return resized_image
+    return image
 
 def init_detection_module():
     detection_service = DetectionService()
@@ -43,13 +59,48 @@ async def css(request):
 
 
 async def javascript(request):
-    content = open(os.path.join(AppConfig.root_path, "html-files/client-new.js"), "r").read()
+    content = open(os.path.join(AppConfig.root_path, "html-files/app.js"), "r").read()
     return web.Response(content_type="application/javascript", text=content)
 
 
 async def tailwind(request):
     content = open(os.path.join(AppConfig.root_path, "html-files/tailwind-ui.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
+
+
+async def image_analyzer_html(request):
+    content = open(os.path.join(AppConfig.root_path, "html-files/image-analyzer/index.html"), "r").read()
+    return web.Response(content_type="text/html", text=content)
+
+
+async def image_analyzer_upload_endpoint(request):
+    content = json.dumps({"success": "ok"})
+    reader = await request.multipart()
+    field = await reader.next()
+    file_data = bytearray()
+
+    size = 0
+    while True:
+        chunk = await field.read_chunk()
+        if not chunk:
+            break
+        size += len(chunk)
+        file_data.extend(chunk)
+
+    # Convert the image data to a numpy array
+    np_data = np.frombuffer(file_data, np.uint8)
+
+    # Decode the numpy array to an OpenCV image
+    img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+    processed_img = await App.detection_service.detect_yolo_as_image(img, font_scale=4, thickness=10)
+    processed_img = rescale_image(processed_img, MAX_WIDTH, MAX_HEIGHT)
+    _, encoded_img = cv2.imencode('.jpg', processed_img)
+
+    # Convert the encoded image to base64
+    base64_img = base64.b64encode(encoded_img).decode('utf-8')
+
+    # Create a JSON response with the base64 image
+    return web.json_response({'image': base64_img})
 
 
 async def offer_producer(request):
@@ -143,7 +194,7 @@ async def on_shutdown(app):
         task.cancel()
         try:
             # Await the task to handle the cancellation properly
-            logging.info(f"Awating {task.get_name()}")
+            logging.info(f"Awaiting {task.get_name()}")
             await task
             logging.info(f"{task.get_name()}: {task.done()}")
         except asyncio.CancelledError:
@@ -174,8 +225,12 @@ def init_web_app():
 
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", tailwind)
-    app.router.add_get("/client-new.js", javascript)
+    app.router.add_get("/app.js", javascript)
     app.router.add_get("/style.css", css)
+
+    app.router.add_get("/image-analyzer", image_analyzer_html)
+    app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
+
     app.router.add_post("/offer", offer_producer)
     app.router.add_post("/viewonly", offer_consumer)
 

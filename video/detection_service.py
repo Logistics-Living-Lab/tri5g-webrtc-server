@@ -1,6 +1,9 @@
+import asyncio
 import logging
+from functools import partial
 from typing import Literal
 
+import cv2
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -39,6 +42,31 @@ class DetectionService:
         # postprocessing output
         results = self.adjust_output(yolo_result)
         return results
+
+    async def detect_yolo_as_image(self, img, font_scale=1, thickness=2):
+        resized_img = cv2.resize(img, (960, 960))
+        detection_result = await asyncio.to_thread(
+            partial(self.detect_yolo, image=resized_img, conf_th=0.4))
+
+        boxes = detection_result["boxes"]
+        for index, box in enumerate(boxes):
+            label = detection_result["names"][detection_result["labels"][index]]
+            score = round(detection_result['scores'][index] * 100.0)
+            self.logger.info(f"Detected: {label} - {score}")
+
+            width_factor = img.shape[1] / resized_img.shape[1]
+            height_factor = img.shape[0] / resized_img.shape[0]
+
+            cv2.rectangle(img,
+                          (int(box[0] * width_factor), int(box[1] * height_factor)),
+                          (int(box[2] * width_factor), int(box[3] * height_factor)),
+                          (0, 255, 0), thickness)
+            cv2.putText(img,
+                        f"{label} - {score}%",
+                        (int(box[0] * width_factor), int(box[1] * height_factor) - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                        font_scale,
+                        (0, 255, 0), thickness)
+        return img
 
     def adjust_output(self, yolo_result: Results) -> dict[
         Literal["boxes", "scores", "labels"], npt.NDArray[np.float32 | np.uint8]

@@ -6,3 +6,7 @@
 .blinking {
     animation: blink 1s infinite;
 }
+
+button:disabled {
+    background: #878787;
+}

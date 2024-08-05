@@ -191,4 +191,44 @@ $(document).ready(() => {
     }
 
     $("#btnConnectLive").click(onClickLive)
+
+    $('#imageInput').on('change', function () {
+        $('#response').html('<p></p>')
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                $('#previewImage').attr('src', e.target.result);
+                $('#previewContainer').show();
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#uploadForm').on('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const imageFile = $('#imageInput')[0].files[0];
+        formData.append('image', imageFile);
+        $('#submitButton').text("Analyzing...")
+        $('#submitButton').prop('disabled', true)
+
+        $.ajax({
+            url: '/image-analyzer-upload', // Replace with your REST API endpoint
+            type: 'POST', data: formData, processData: false, contentType: false,
+            success: function (response) {
+                const base64Image = response.image;
+                const imgSrc = 'data:image/jpeg;base64,' + base64Image;
+                $('#previewImage').attr('src', imgSrc);
+                $('#response').html('<p class="text-green-500">Image processed successfully!</p>');
+                $('#submitButton').text("Analyze")
+                $('#submitButton').prop('disabled', false)
+            },
+            error: function (error) {
+                $('#response').html('<p class="text-red-500">Failed to upload image.</p>');
+                $('#submitButton').text("Analyze")
+                $('#submitButton').prop('disabled', false)
+            }
+        });
+    });
 })
