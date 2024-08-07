@@ -35,6 +35,7 @@ args = None
 MAX_WIDTH = 1600
 MAX_HEIGHT = 1600
 
+
 def rescale_image(image, max_width, max_height):
     height, width = image.shape[:2]
     if width > max_width or height > max_height:
@@ -45,6 +46,7 @@ def rescale_image(image, max_width, max_height):
         resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
         return resized_image
     return image
+
 
 def init_detection_module():
     detection_service = DetectionService()
@@ -74,21 +76,13 @@ async def image_analyzer_html(request):
 
 
 async def image_analyzer_upload_endpoint(request):
-    content = json.dumps({"success": "ok"})
-    reader = await request.multipart()
-    field = await reader.next()
-    file_data = bytearray()
+    contentBytes = await request.content.read()
+    contentJson = json.loads(contentBytes.decode())
 
-    size = 0
-    while True:
-        chunk = await field.read_chunk()
-        if not chunk:
-            break
-        size += len(chunk)
-        file_data.extend(chunk)
+    image_base64 = contentJson['image']
 
     # Convert the image data to a numpy array
-    np_data = np.frombuffer(file_data, np.uint8)
+    np_data = np.frombuffer(base64.b64decode(image_base64), np.uint8)
 
     # Decode the numpy array to an OpenCV image
     img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
@@ -100,7 +94,7 @@ async def image_analyzer_upload_endpoint(request):
     base64_img = base64.b64encode(encoded_img).decode('utf-8')
 
     # Create a JSON response with the base64 image
-    return web.json_response({'image': base64_img})
+    return web.json_response({'image': base64_img, 'success': 'ok'})
 
 
 async def offer_producer(request):
