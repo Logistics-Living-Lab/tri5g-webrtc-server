@@ -40,9 +40,9 @@ class TelemetryService:
                                                self.detection_time)))
 
             await asyncio.gather(*coros)
-            if count % 10 == 0:
+            if count % 100 == 0:
                 gc.collect()
-                self.logger.info("#################")
-                self.logger.info(f"Memory usage: {memory_usage()[0]}")
-                self.logger.info("#################")
+            #     self.logger.info("#################")
+            #     self.logger.info(f"Memory usage: {memory_usage()[0]}")
+            #     self.logger.info("#################")
             await asyncio.sleep(1)
