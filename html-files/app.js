@@ -12,7 +12,16 @@ $(document).ready(() => {
     const numberOfTracks = 2
 
     function createPeerConnection(useTestVideo = false) {
-        const pc = new RTCPeerConnection()
+        // const config = {
+        //     sdpSemantics: 'unified-plan'
+        // };
+
+        var config = {
+            sdpSemantics: 'unified-plan'
+        };
+
+        const pc = new RTCPeerConnection(config)
+
         pc.ondatachannel = (channelEvt) => {
             console.log(channelEvt)
             channelEvt.channel.addEventListener('open', () => {

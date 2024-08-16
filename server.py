@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from aiohttp import web
 from aiortc import RTCSessionDescription, RTCDataChannel
+from aiortc.contrib.media import MediaBlackhole
 
 from config.app_config import AppConfig
 from config.app import App
@@ -23,9 +24,12 @@ from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
+from video.transformers.dummy_frame_transformer import DummyFrameTransformer
 from video.transformers.yolo_transformer import YoloTransformer
 from video.video_transform_track import VideoTransformTrack
 from memory_profiler import memory_usage
+
+from video.video_transform_track_debug import VideoTransformTrackDebug
 
 logger = logging.getLogger("pc")
 
@@ -119,25 +123,76 @@ async def offer_producer(request):
                     App.telemetry_service.rtt_camera = message_json["rtt"]
 
     @peer_connection.on("track")
-    def on_track(track):
+    async def on_track(track):
         logging.info("Track %s received", track.kind)
 
         if track.kind == "video":
-            video_subscription = App.connection_manager.media_relay.subscribe(track, buffered=False)
+            # relayed_track = App.connection_manager.media_relay.subscribe(track, buffered=True)
+
+            track1 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
+                                              name='video_subscription')
+            # track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True), name='video_subscription_edge')
+            track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
+                                         name='video_subscription_edge',
+                                         video_transformer=DummyFrameTransformer())
+
+            # video_subscription = VideoTransformTrack(*
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='cam-edge',
+            #     video_transformer=DummyFrameTransformer()
+            # )
+            # video_subscription_edge = VideoTransformTrack(
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='cam-edge',
+            #     video_transformer=DummyFrameTransformer()
+            # )
+
+            # video_subscription_edge = VideoTransformTrackDebug(
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='video_subscription_edge',
+            # )
+            # video_subscription = VideoTransformTrackDebug(
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='video_subscription',
+            # )
+
+            # video_subscription_edge = App.connection_manager.media_relay.subscribe(
+            #     VideoTransformTrackDebug(relayed_track, name='video_subscription_edge'), buffered=True)
+            #
+            # video_subscription = App.connection_manager.media_relay.subscribe(
+            #     VideoTransformTrackDebug(relayed_track, name='video_subscription'),
+            #     buffered=True)
+
+            # video_subscription = VideoTransformTrackDebug(relayed_track, name='video_subscription')
+            # video_subscription_edge = VideoTransformTrackDebug(relayed_track, name='video_subscription_edge')
+
             # video_subscription_edge = App.connection_manager.media_relay.subscribe(track, buffered=True)
-            video_subscription_edge = VideoTransformTrack(
-                App.connection_manager.media_relay.subscribe(track, buffered=False),
-                name='cam-edge',
-                video_transformer=YoloTransformer(App.detection_service))
+            # video_subscription_edge = VideoTransformTrack(
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='cam-edge',
+            #     video_transformer=YoloTransformer(App.detection_service))
+
+            # video_subscription_edge = VideoTransformTrack(
+            #     App.connection_manager.media_relay.subscribe(track, buffered=False),
+            #     name='cam-edge',
+            #     video_transformer=DummyFrameTransformer())
 
             # video_subscription_edge = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track),
             #                                               name='cam-edge',
             #                                               video_transformer=UnetTransformer(App.detection_service,
             #                                                                                 confidence_threshold=0.51))
 
-            peer_connection.subscriptions.append(video_subscription)
-            peer_connection.subscriptions.append(video_subscription_edge)
-            peer_connection.addTrack(video_subscription_edge)
+            # Needed to start Video Tracks and analytics
+            blackhole1 = MediaBlackhole()
+            blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            await blackhole1.start()
+
+            blackhole2 = MediaBlackhole()
+            blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            await blackhole2.start()
+
+            peer_connection.subscriptions.append(track1)
+            peer_connection.subscriptions.append(track2)
 
         @track.on("ended")
         async def on_ended():
@@ -150,22 +205,18 @@ async def offer_producer(request):
 
 
 async def offer_consumer(request):
-    logging.info(f"Current memory usage {memory_usage()[0]} MB")
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
     consumer_peer_connection = App.connection_manager.create_peer_connection(connection_type="consumer")
 
     producer_peer_connection = App.connection_manager.get_primary_producer_connection()
-    # track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=True)
-    track1 = producer_peer_connection.subscriptions[0]
-    # track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=True)
-    track2 = producer_peer_connection.subscriptions[1]
+    track1 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[0], buffered=False)
+    track2 = App.connection_manager.media_relay.subscribe(producer_peer_connection.subscriptions[1], buffered=False)
 
     consumer_peer_connection.addTrack(track1)
     consumer_peer_connection.addTrack(track2)
     ConnectionManager.force_codec(consumer_peer_connection, "video/H264")
-    # handle offer
 
     await consumer_peer_connection.setRemoteDescription(offer)
     return await App.connection_manager.create_sdp_response_for_peer_connection(consumer_peer_connection)
@@ -174,14 +225,6 @@ async def offer_consumer(request):
 async def on_shutdown(app):
     App.telemetry_service.shutdown()
     await App.connection_manager.shutdown()
-    profiler.disable()
-    s = io.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
-    with open("mprof.out", 'w') as f:
-        f.write(s.getvalue())
     loop = asyncio.get_event_loop()
     pending = asyncio.all_tasks(loop=loop)
     for task in pending:
@@ -270,8 +313,8 @@ def check_if_user_mode():
 
 # @profile
 def main():
-    global profiler
-    profiler = cProfile.Profile()
+    # global profiler
+    # profiler = cProfile.Profile()
 
     # profiler.enable()
     # logging.basicConfig(level=logging.DEBUG)

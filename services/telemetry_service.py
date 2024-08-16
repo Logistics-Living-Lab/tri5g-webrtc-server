@@ -5,6 +5,8 @@ import logging
 from memory_profiler import memory_usage
 
 from services.connection_manager import ConnectionManager
+from video.video_track_with_telemetry import VideoTrackWithTelemetry
+from video.video_transform_track import VideoTransformTrack
 
 
 class TelemetryService:
@@ -12,7 +14,7 @@ class TelemetryService:
         self.logger = logging.getLogger(__name__)
         self.__connection_manager = connection_manager
         self.rtt_camera = 0
-        self.fps_decoding = 0
+        self.fps_decoded = 0
         self.fps_detection = 0
         self.detection_time = 0
         self.send_telemetry_task: asyncio.Task | None = None
@@ -34,15 +36,27 @@ class TelemetryService:
 
             coros = []
             for connection in self.__connection_manager.get_all_connections():
+
+                # Update statistics
+                if connection.connection_type == 'producer':
+                    for subscription in connection.subscriptions:
+                        if isinstance(subscription, VideoTrackWithTelemetry):
+                            self.fps_decoded = subscription.fps_decoded
+                        if isinstance(subscription, VideoTransformTrack):
+                            self.detection_time = subscription.detection_time
+
+                # Send statistics
+                coros.append(
+                    asyncio.create_task(
+                        connection.send_statistics(self.rtt_camera,
+                                                   self.fps_decoded,
+                                                   self.fps_decoded,
+                                                   self.detection_time)
+                    )
+                )
                 coros.append(asyncio.create_task(connection.send_rtt_packet()))
-                coros.append(asyncio.create_task(
-                    connection.send_statistics(self.rtt_camera, self.fps_decoding, self.fps_detection,
-                                               self.detection_time)))
 
             await asyncio.gather(*coros)
             if count % 100 == 0:
                 gc.collect()
-            #     self.logger.info("#################")
-            #     self.logger.info(f"Memory usage: {memory_usage()[0]}")
-            #     self.logger.info("#################")
             await asyncio.sleep(1)
