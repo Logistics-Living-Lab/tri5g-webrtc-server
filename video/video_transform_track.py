@@ -20,9 +20,10 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
 
     async def create_transformation_task(self, frame: VideoFrame):
         transformed_frame = await self.video_transformer.transform_frame_task(frame)
+        transformed_frame.pts = frame.pts
+        transformed_frame.dts = frame.dts
+        transformed_frame.time_base = frame.time_base
         self.__current_frame = transformed_frame
-        self.__current_frame.pts = frame.pts
-        self.__current_frame.time_base = frame.time_base
         self.detection_time = self.video_transformer.measured_detection_time_ms
         self.__transformed_frames_count += 1
         self.__is_processing_frame = False
@@ -34,9 +35,11 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
         if self.__current_frame is None:
             self.__current_frame = frame
 
+        self.__current_frame.pts = frame.pts
+        self.__current_frame.time_base = frame.time_base
+        self.__current_frame.dts = frame.dts
+
         if self.__is_processing_frame:
-            self.__current_frame.pts = frame.pts
-            self.__current_frame.time_base = frame.time_base
             return self.__current_frame
 
         self.__is_processing_frame = True
