@@ -97,11 +97,14 @@ async def image_analyzer_upload_endpoint(request):
     # Decode the numpy array to an OpenCV image
     img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
 
-    cv2.imwrite(os.path.join(images_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-original.jpg"), img)
+    timestamp = time.strftime('%Y%m%d-%H_%M_%S')
+
+    cv2.imwrite(os.path.join(images_records_dir, timestamp + "-original.jpg"), img)
     processed_img = await App.detection_service.detect_yolo_as_image(img, font_scale=4, thickness=10)
     processed_img = rescale_image(processed_img, MAX_WIDTH, MAX_HEIGHT)
+    cv2.imwrite(os.path.join(images_records_dir, timestamp + "-processed.jpg"), processed_img)
+
     _, encoded_img = cv2.imencode('.jpg', processed_img)
-    cv2.imwrite(os.path.join(images_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-processed.jpg"), encoded_img)
 
     # Convert the encoded image to base64
     base64_img = base64.b64encode(encoded_img).decode('utf-8')

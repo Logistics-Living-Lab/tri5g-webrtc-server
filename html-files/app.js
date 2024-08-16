@@ -115,7 +115,6 @@ $(document).ready(() => {
 
         dc.addEventListener('message', (evt) => {
             const messageJson = JSON.parse(evt.data)
-            console.log("Test")
             console.log(messageJson)
 
             if (messageJson.type === 'rtt') {
@@ -216,28 +215,33 @@ $(document).ready(() => {
 
     $('#uploadForm').on('submit', function (e) {
         e.preventDefault();
-        const formData = new FormData();
-        const imageFile = $('#imageInput')[0].files[0];
-        formData.append('image', imageFile);
         $('#submitButton').text("Analyzing...")
         $('#submitButton').prop('disabled', true)
+        const imageFile = $('#imageInput')[0].files[0];
+        const reader = new FileReader();
+        reader.onloadend = function() {
+            const base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
+            console.log(base64String);
 
-        $.ajax({
-            url: '/image-analyzer-upload', // Replace with your REST API endpoint
-            type: 'POST', data: formData, processData: false, contentType: false,
-            success: function (response) {
-                const base64Image = response.image;
-                const imgSrc = 'data:image/jpeg;base64,' + base64Image;
-                $('#previewImage').attr('src', imgSrc);
-                $('#response').html('<p class="text-green-500">Image processed successfully!</p>');
-                $('#submitButton').text("Analyze")
-                $('#submitButton').prop('disabled', false)
-            },
-            error: function (error) {
-                $('#response').html('<p class="text-red-500">Failed to upload image.</p>');
-                $('#submitButton').text("Analyze")
-                $('#submitButton').prop('disabled', false)
-            }
-        });
+            $.ajax({
+                url: '/image-analyzer-upload', // Replace with your REST API endpoint
+                type: 'POST', data: JSON.stringify({image: base64String}),
+                contentType: 'application/json',
+                success: function (response) {
+                    const base64Image = response.image;
+                    const imgSrc = 'data:image/jpeg;base64,' + base64Image;
+                    $('#previewImage').attr('src', imgSrc);
+                    $('#response').html('<p class="text-green-500">Image processed successfully!</p>');
+                    $('#submitButton').text("Analyze")
+                    $('#submitButton').prop('disabled', false)
+                },
+                error: function (error) {
+                    $('#response').html('<p class="text-red-500">Failed to upload image.</p>');
+                    $('#submitButton').text("Analyze")
+                    $('#submitButton').prop('disabled', false)
+                }
+            });
+        }
+        reader.readAsDataURL(imageFile);
     });
 })
