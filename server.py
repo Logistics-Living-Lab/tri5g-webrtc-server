@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import base64
+import datetime
 import json
 import logging
 import os
@@ -8,6 +9,8 @@ import ssl
 import cProfile
 import pstats
 import io
+import time
+from pathlib import Path
 
 import av
 import cv2
@@ -16,7 +19,7 @@ import numpy as np
 import torch
 from aiohttp import web
 from aiortc import RTCSessionDescription, RTCDataChannel
-from aiortc.contrib.media import MediaBlackhole
+from aiortc.contrib.media import MediaBlackhole, MediaRecorder
 
 from config.app_config import AppConfig
 from config.app import App
@@ -183,21 +186,35 @@ async def offer_producer(request):
             #                                                                                 confidence_threshold=0.51))
 
             # Needed to start Video Tracks and analytics
-            blackhole1 = MediaBlackhole()
-            blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
-            await blackhole1.start()
+            # blackhole1 = MediaBlackhole()
+            # blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            # await blackhole1.start()
+            #
+            # blackhole2 = MediaBlackhole()
+            # blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            # await blackhole2.start()
 
-            blackhole2 = MediaBlackhole()
-            blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            await blackhole2.start()
+            recordings_dir = os.path.join(AppConfig.root_path, "recordings")
+            Path.mkdir(Path(recordings_dir), exist_ok=True)
+
+            recorder1 = MediaRecorder(
+                os.path.join(recordings_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
+            recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            await recorder1.start()
+
+            recorder2 = MediaRecorder(
+                os.path.join(recordings_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
+            recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            await recorder2.start()
 
             peer_connection.subscriptions.append(track1)
             peer_connection.subscriptions.append(track2)
 
         @track.on("ended")
         async def on_ended():
+            await recorder1.stop()
+            await recorder2.stop()
             logging.info("Track %s ended", track.kind)
-            # await recorder.stop()
 
     # handle offer
     await peer_connection.setRemoteDescription(offer)
