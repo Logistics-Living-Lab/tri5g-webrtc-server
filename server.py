@@ -130,11 +130,9 @@ async def offer_producer(request):
         logging.info("Track %s received", track.kind)
 
         if track.kind == "video":
-            # relayed_track = App.connection_manager.media_relay.subscribe(track, buffered=True)
-
             track1 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                               name='video_subscription')
-            # track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True), name='video_subscription_edge')
+
             track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                          name='video_subscription_edge',
                                          video_transformer=DummyFrameTransformer())
