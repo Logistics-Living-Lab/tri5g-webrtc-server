@@ -91,11 +91,17 @@ async def image_analyzer_upload_endpoint(request):
     # Convert the image data to a numpy array
     np_data = np.frombuffer(base64.b64decode(image_base64), np.uint8)
 
+    images_records_dir = os.path.join(AppConfig.records_directory(), "images")
+    Path.mkdir(Path(images_records_dir), exist_ok=True, parents=True)
+
     # Decode the numpy array to an OpenCV image
     img = cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+
+    cv2.imwrite(os.path.join(images_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-original.jpg"), img)
     processed_img = await App.detection_service.detect_yolo_as_image(img, font_scale=4, thickness=10)
     processed_img = rescale_image(processed_img, MAX_WIDTH, MAX_HEIGHT)
     _, encoded_img = cv2.imencode('.jpg', processed_img)
+    cv2.imwrite(os.path.join(images_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-processed.jpg"), encoded_img)
 
     # Convert the encoded image to base64
     base64_img = base64.b64encode(encoded_img).decode('utf-8')
@@ -192,16 +198,16 @@ async def offer_producer(request):
             # blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
             # await blackhole2.start()
 
-            recordings_dir = os.path.join(AppConfig.root_path, "recordings")
-            Path.mkdir(Path(recordings_dir), exist_ok=True)
+            video_records_dir = os.path.join(AppConfig.records_directory(), "videos")
+            Path.mkdir(Path(video_records_dir), exist_ok=True, parents=True)
 
             recorder1 = MediaRecorder(
-                os.path.join(recordings_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
+                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
             recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
             await recorder1.start()
 
             recorder2 = MediaRecorder(
-                os.path.join(recordings_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
+                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
             recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
             await recorder2.start()
 
