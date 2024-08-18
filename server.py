@@ -88,6 +88,7 @@ async def image_analyzer_upload_endpoint(request):
     contentJson = json.loads(contentBytes.decode())
 
     image_base64 = contentJson['image']
+    model_id = contentJson['modelId']
 
     # Convert the image data to a numpy array
     np_data = np.frombuffer(base64.b64decode(image_base64), np.uint8)
@@ -101,7 +102,9 @@ async def image_analyzer_upload_endpoint(request):
     timestamp = time.strftime('%Y%m%d-%H_%M_%S')
 
     cv2.imwrite(os.path.join(images_records_dir, timestamp + "-original.jpg"), img)
-    processed_img = await App.detection_service.detect_yolo_as_image(img, font_scale=4, thickness=10)
+    model = App.detection_service.get_model_by_id(model_id)
+    processed_img = await model.detect_yolo_as_image(img, font_scale=4, thickness=10)
+
     processed_img = rescale_image(processed_img, MAX_WIDTH, MAX_HEIGHT)
     cv2.imwrite(os.path.join(images_records_dir, timestamp + "-processed.jpg"), processed_img)
 
@@ -112,6 +115,12 @@ async def image_analyzer_upload_endpoint(request):
 
     # Create a JSON response with the base64 image
     return web.json_response({'image': base64_img, 'success': 'ok'})
+
+
+async def models_api_endpoint(request):
+    models = App.detection_service.models
+    models_json = [{'id': model.model_id} for model in models]
+    return web.json_response(models_json)
 
 
 async def offer_producer(request):
@@ -145,7 +154,8 @@ async def offer_producer(request):
 
             track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                          name='video_subscription_edge',
-                                         video_transformer=YoloTransformer('damage-detection-yolo', App.detection_service))
+                                         video_transformer=YoloTransformer('damage-detection-yolo',
+                                                                           App.detection_service))
 
             # video_subscription = VideoTransformTrack(*
             #     App.connection_manager.media_relay.subscribe(track, buffered=False),
@@ -292,6 +302,8 @@ def init_web_app():
 
     app.router.add_get("/image-analyzer", image_analyzer_html)
     app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
+
+    app.router.add_get("/api/models", models_api_endpoint)
 
     app.router.add_post("/offer", offer_producer)
     app.router.add_post("/viewonly", offer_consumer)

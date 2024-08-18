@@ -2,6 +2,30 @@
 
 
 $(document).ready(() => {
+    function fetchModels() {
+        $.ajax("/api/models", {
+            type: 'GET',
+            success: (data) => {
+                for (model of data) {
+                    html = renderModelOption(model.id)
+                    $("#modelOptionsDiv").append(html)
+                }
+            }
+        })
+    }
+
+    function renderModelOption(modelId) {
+        return `
+        <label class="flex items-center space-x-2">
+            <input type="radio" name="modelId" value="${modelId}" class="form-radio text-blue-600">
+            <span>${modelId}</span>
+        </label>
+        `
+    }
+
+    fetchModels()
+
+
     let dcInterval
     let time_start = null
 
@@ -215,17 +239,18 @@ $(document).ready(() => {
 
     $('#uploadForm').on('submit', function (e) {
         e.preventDefault();
+        const selectedValue = $('input[name="modelId"]:checked').val();
         $('#submitButton').text("Analyzing...")
         $('#submitButton').prop('disabled', true)
         const imageFile = $('#imageInput')[0].files[0];
         const reader = new FileReader();
-        reader.onloadend = function() {
+        reader.onloadend = function () {
             const base64String = reader.result.replace("data:", "").replace(/^.+,/, "");
             console.log(base64String);
 
             $.ajax({
                 url: '/image-analyzer-upload', // Replace with your REST API endpoint
-                type: 'POST', data: JSON.stringify({image: base64String}),
+                type: 'POST', data: JSON.stringify({image: base64String, modelId: selectedValue}),
                 contentType: 'application/json',
                 success: function (response) {
                     const base64Image = response.image;
