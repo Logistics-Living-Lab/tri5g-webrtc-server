@@ -25,6 +25,9 @@ class DetectionService:
         self.unet_detector: DetectionModule | None = None
         self.models = []
 
+    def get_model_by_id(self, model_id: str):
+        return next((model for model in self.models if model.model_id == model_id), None)
+
     def load_models(self):
         with open(os.path.join(AppConfig.root_path, 'model-config.json'), 'r') as file:
             data = json.load(file)
@@ -32,7 +35,6 @@ class DetectionService:
                 if model_config['type'] == 'yolo':
                     self.models.append(
                         YoloModel(model_config['id'], os.path.join(AppConfig.root_path, model_config['path'])))
-            logging.info(self.models)
 
     def load_unet_detector(self, model_dir_path, config_file_name="cfg.yaml"):
         self.unet_detector = DetectionModule.load_unet_detector(model_dir_path, config_file_name)
