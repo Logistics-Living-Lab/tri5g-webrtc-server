@@ -57,7 +57,8 @@ def rescale_image(image, max_width, max_height):
 
 def init_detection_module():
     detection_service = DetectionService()
-    detection_service.load_yolo(os.path.join(AppConfig.root_path, "models", AppConfig.damage_detection_model_file))
+    detection_service.load_models()
+    # detection_service.load_yolo(os.path.join(AppConfig.root_path, "models", AppConfig.damage_detection_model_file))
     detection_service.load_unet_detector(os.path.join(AppConfig.root_path, "models"))
     App.detection_service = detection_service
 
@@ -144,7 +145,7 @@ async def offer_producer(request):
 
             track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                          name='video_subscription_edge',
-                                         video_transformer=DummyFrameTransformer())
+                                         video_transformer=YoloTransformer(App.detection_service))
 
             # video_subscription = VideoTransformTrack(*
             #     App.connection_manager.media_relay.subscribe(track, buffered=False),
@@ -382,7 +383,7 @@ def main():
     logging.info(f"Using STUN SERVER: {args.stun_server}")
     check_if_user_mode()
 
-    AppConfig.damage_detection_model_file = args.damage_model_file
+    # AppConfig.damage_detection_model_file = args.damage_model_file
     init_detection_module()
     app = init_web_app()
 

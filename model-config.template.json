@@ -1,0 +1,6 @@
+[
+  {
+    "id": "yolo-v8x",
+    "path": "models/object-detection-yolo-v8/yolov8x.pt"
+  }
+]
