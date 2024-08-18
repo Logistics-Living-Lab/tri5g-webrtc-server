@@ -145,7 +145,7 @@ async def offer_producer(request):
 
             track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                          name='video_subscription_edge',
-                                         video_transformer=YoloTransformer('yolo-v8x', App.detection_service))
+                                         video_transformer=YoloTransformer('damage-detection-yolo', App.detection_service))
 
             # video_subscription = VideoTransformTrack(*
             #     App.connection_manager.media_relay.subscribe(track, buffered=False),

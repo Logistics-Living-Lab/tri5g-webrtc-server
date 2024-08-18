@@ -13,7 +13,7 @@ from ai.ai_model import AiModel
 
 class YoloModel(AiModel):
 
-    def __init__(self, model_id: str, model_file_path: str, conf_th: float = 0.05):
+    def __init__(self, model_id: str, model_file_path: str, conf_th: float = 0.5):
         super().__init__(model_id, 'yolo')
         self.yolo_model: YOLO | None = None
         self.conf_th = conf_th
@@ -51,6 +51,7 @@ class YoloModel(AiModel):
         detection_result = await asyncio.to_thread(
             partial(self.detect_yolo, image=resized_img, conf_th=self.conf_th)
         )
+        # detection_result = await self.detect_yolo(image=resized_img, conf_th=self.conf_th)
 
         boxes = detection_result["boxes"]
         for index, box in enumerate(boxes):
