@@ -20,7 +20,8 @@ class TelemetryService:
         self.send_telemetry_task: asyncio.Task | None = None
 
     async def start(self):
-        self.send_telemetry_task = asyncio.create_task(self.__send_statistics())
+        pass
+        #self.send_telemetry_task = asyncio.create_task(self.__send_statistics())
 
     def shutdown(self):
         if self.send_telemetry_task:
