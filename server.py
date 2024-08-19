@@ -129,6 +129,11 @@ async def offer_producer(request):
         return
 
     params = await request.json()
+    model_id = "yolo-v8x"
+
+    if "modelId" in params:
+        model_id = params["modelId"]
+
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
     peer_connection = App.connection_manager.create_peer_connection(connection_type="producer")
@@ -154,7 +159,7 @@ async def offer_producer(request):
 
             track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                          name='video_subscription_edge',
-                                         video_transformer=YoloTransformer('damage-detection-yolo',
+                                         video_transformer=YoloTransformer(model_id,
                                                                            App.detection_service))
 
             # video_subscription = VideoTransformTrack(*
