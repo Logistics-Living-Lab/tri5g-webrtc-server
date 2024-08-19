@@ -157,10 +157,17 @@ async def offer_producer(request):
             track1 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                               name='video_subscription')
 
-            track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
-                                         name='video_subscription_edge',
-                                         video_transformer=YoloTransformer(model_id,
-                                                                           App.detection_service))
+            # track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
+            #                              name='video_subscription_edge',
+            #                              video_transformer=YoloTransformer(model_id,
+            #                                                                App.detection_service))
+
+            # track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
+            #                              name='video_subscription_edge',
+            #                              video_transformer=DummyFrameTransformer())
+
+            track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
+                                              name='video_subscription_edge')
 
             # video_subscription = VideoTransformTrack(*
             #     App.connection_manager.media_relay.subscribe(track, buffered=False),
