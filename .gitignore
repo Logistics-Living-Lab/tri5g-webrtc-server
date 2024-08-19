@@ -167,4 +167,4 @@ models/
 auth.json
 codecs/h264_original.py
 /records
-model-config.template.json
+model-config.json
