@@ -8,9 +8,9 @@ import torch
 import yaml
 from torch import Tensor, nn
 
-from detector.src.nn.detection_head import YOLOv3Head
-from detector.src.utils.map import get_mAP_arguments
-from detector.src.utils.preprocessing import ImagePreprocessor
+from detector_old.src.nn.detection_head import YOLOv3Head
+from detector_old.src.utils.map import get_mAP_arguments
+from detector_old.src.utils.preprocessing import ImagePreprocessor
 from .nn.unet_backbone import (
     UNSTRUCTURED_BLOCK_ARGS,
     UnetEncoder,

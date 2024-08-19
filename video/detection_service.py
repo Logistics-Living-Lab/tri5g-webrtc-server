@@ -12,9 +12,11 @@ import torch
 from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
+from ai.unet_model import UnetModel
 from ai.yolo_model import YoloModel
 from config.app_config import AppConfig
-from detector import DetectionModule
+from detector.src.nn.unet_backbone import UNet
+from detector_old import DetectionModule
 
 
 class DetectionService:
@@ -35,6 +37,8 @@ class DetectionService:
                 if model_config['type'] == 'yolo':
                     self.models.append(
                         YoloModel(model_config['id'], os.path.join(AppConfig.root_path, model_config['path'])))
+                elif model_config['type'] == 'unet':
+                    self.models.append(UnetModel(model_config['id']))
 
     def load_unet_detector(self, model_dir_path, config_file_name="cfg.yaml"):
         self.unet_detector = DetectionModule.load_unet_detector(model_dir_path, config_file_name)
