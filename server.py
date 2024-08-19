@@ -154,7 +154,7 @@ async def offer_producer(request):
         logging.info("Track %s received", track.kind)
 
         if track.kind == "video":
-            track1 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=False),
+            track1 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                               name='video_subscription')
 
             # track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
@@ -162,11 +162,7 @@ async def offer_producer(request):
             #                              video_transformer=YoloTransformer(model_id,
             #                                                                App.detection_service))
 
-            # track2 = VideoTransformTrack(App.connection_manager.media_relay.subscribe(track, buffered=True),
-            #                              name='video_subscription_edge',
-            #                              video_transformer=DummyFrameTransformer())
-
-            track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=False),
+            track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
                                               name='video_subscription_edge')
 
             # video_subscription = VideoTransformTrack(*
@@ -216,26 +212,26 @@ async def offer_producer(request):
             #                                                                                 confidence_threshold=0.51))
 
             # Needed to start Video Tracks and analytics
-            # blackhole1 = MediaBlackhole()
-            # blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
-            # await blackhole1.start()
-            #
-            # blackhole2 = MediaBlackhole()
-            # blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            # await blackhole2.start()
+            blackhole1 = MediaBlackhole()
+            blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            await blackhole1.start()
+
+            blackhole2 = MediaBlackhole()
+            blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            await blackhole2.start()
 
             video_records_dir = os.path.join(AppConfig.records_directory(), "videos")
             Path.mkdir(Path(video_records_dir), exist_ok=True, parents=True)
 
-            recorder1 = MediaRecorder(
-                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
-            recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
-            await recorder1.start()
-
-            recorder2 = MediaRecorder(
-                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
-            recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            await recorder2.start()
+            # recorder1 = MediaRecorder(
+            #     os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
+            # recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            # await recorder1.start()
+            #
+            # recorder2 = MediaRecorder(
+            #     os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
+            # recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            # await recorder2.start()
 
             peer_connection.subscriptions.append(track1)
             peer_connection.subscriptions.append(track2)
