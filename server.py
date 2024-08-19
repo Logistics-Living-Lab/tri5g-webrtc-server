@@ -238,8 +238,8 @@ async def offer_producer(request):
 
         @track.on("ended")
         async def on_ended():
-            await recorder1.stop()
-            await recorder2.stop()
+            # await recorder1.stop()
+            # await recorder2.stop()
             logging.info("Track %s ended", track.kind)
 
     # handle offer
