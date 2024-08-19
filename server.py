@@ -162,8 +162,8 @@ async def offer_producer(request):
             #                              video_transformer=YoloTransformer(model_id,
             #                                                                App.detection_service))
 
-            track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
-                                              name='video_subscription_edge')
+            # track2 = VideoTransformTrackDebug(App.connection_manager.media_relay.subscribe(track, buffered=True),
+            #                                   name='video_subscription_edge')
 
             # video_subscription = VideoTransformTrack(*
             #     App.connection_manager.media_relay.subscribe(track, buffered=False),
@@ -216,9 +216,9 @@ async def offer_producer(request):
             blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
             await blackhole1.start()
 
-            blackhole2 = MediaBlackhole()
-            blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            await blackhole2.start()
+            # blackhole2 = MediaBlackhole()
+            # blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            # await blackhole2.start()
 
             video_records_dir = os.path.join(AppConfig.records_directory(), "videos")
             Path.mkdir(Path(video_records_dir), exist_ok=True, parents=True)
@@ -234,7 +234,7 @@ async def offer_producer(request):
             # await recorder2.start()
 
             peer_connection.subscriptions.append(track1)
-            peer_connection.subscriptions.append(track2)
+            # peer_connection.subscriptions.append(track2)
 
         @track.on("ended")
         async def on_ended():
