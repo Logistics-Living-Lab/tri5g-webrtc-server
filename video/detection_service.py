@@ -37,7 +37,8 @@ class DetectionService:
                     self.models.append(
                         YoloModel(model_config['id'], os.path.join(AppConfig.root_path, model_config['path'])))
                 elif model_config['type'] == 'unet':
-                    self.models.append(UnetModel(model_config['id']))
+                    self.models.append(
+                        UnetModel(model_config['id'], os.path.join(AppConfig.root_path, model_config['path'])))
 
     def load_unet_detector(self, model_dir_path, config_file_name="cfg.yaml"):
         self.unet_detector = DetectionModule.load_unet_detector(model_dir_path, config_file_name)

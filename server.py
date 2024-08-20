@@ -59,7 +59,7 @@ def init_detection_module():
     detection_service = DetectionService()
     detection_service.load_models()
     # detection_service.load_yolo(os.path.join(AppConfig.root_path, "models", AppConfig.damage_detection_model_file))
-    detection_service.load_unet_detector(os.path.join(AppConfig.root_path, "models"))
+    # detection_service.load_unet_detector(os.path.join(AppConfig.root_path, "models"))
     App.detection_service = detection_service
 
 
