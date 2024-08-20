@@ -23,7 +23,6 @@ from aiortc.contrib.media import MediaBlackhole, MediaRecorder
 
 from config.app_config import AppConfig
 from config.app import App
-from detector.src.nn.unet_backbone import UNet
 from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.telemetry_service import TelemetryService

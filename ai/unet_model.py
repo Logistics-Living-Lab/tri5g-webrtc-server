@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Results
 
 from ai.ai_model import AiModel
-from detector import load_segmentator, load_detector
+from detector import load_segmentator
 
 
 class UnetModel(AiModel):

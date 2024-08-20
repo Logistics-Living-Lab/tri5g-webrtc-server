@@ -15,8 +15,7 @@ from ultralytics.engine.results import Results
 from ai.unet_model import UnetModel
 from ai.yolo_model import YoloModel
 from config.app_config import AppConfig
-from detector.src.nn.unet_backbone import UNet
-from detector_old import DetectionModule
+from detector import DetectionModule
 
 
 class DetectionService:
