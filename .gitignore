@@ -168,4 +168,4 @@ auth.json
 codecs/h264_original.py
 /records
 model-config.json
-/detector_old2/
+detector/
