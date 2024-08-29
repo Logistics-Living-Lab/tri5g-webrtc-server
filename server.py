@@ -305,6 +305,8 @@ def init_web_app():
     app.router.add_get("/app.js", javascript)
     app.router.add_get("/style.css", css)
 
+    app.router.add_static("/images", os.path.join(AppConfig.root_path, "html-files/images"))
+
     app.router.add_get("/image-analyzer", image_analyzer_html)
     app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
 
