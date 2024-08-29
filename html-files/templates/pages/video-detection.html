@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex space-x-4">
+    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+        <video class="w-full" width="1920" height="1080" id="video01" autoplay="true" playsinline="true"></video>
+    </div>
+    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+        <video class="w-full" width="1920" height="1080" id="video02" autoplay="true" playsinline="true"></video>
+    </div>
+</div>
+<button id="btnConnectLive"
+        class="bg-blue-500 m-8 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+    Connect to Live Stream
+</button>
+
+<div class="flex space-x-4">
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-center">
+                    <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                </div>
+                <div class="text-center mt-4">
+                    <p id="rttCamera" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                    <p class="text-gray-600 mt-2">
+                        Camera
+                        <i class="fas fa-arrow-left"></i>
+                        <i class="fas fa-arrow-right"></i>
+                        Server
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-center">
+                    <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                </div>
+                <div class="text-center mt-4">
+                    <p id="rttValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                    <p class="text-gray-600 mt-2">
+                        Server
+                        <i class="fas fa-arrow-left"></i>
+                        <i class="fas fa-arrow-right"></i>
+                        User
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-center">
+                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                <h2 class="text-2xl font-bold text-gray-800">FPS (Decoding)</h2>
+            </div>
+            <div class="text-center mt-4">
+                <p id="fpsDecodingValue" class="text-4xl text-blue-600 mt-4">0</p>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-center">
+                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                <h2 class="text-2xl font-bold text-gray-800">FPS (Detection)</h2>
+            </div>
+            <div class="text-center mt-4">
+                <p id="fpsDetectionValue" class="text-4xl text-blue-600 mt-4">0</p>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-center">
+                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                <h2 class="text-2xl font-bold text-gray-800">Detection Time</h2>
+            </div>
+            <div class="text-center mt-4">
+                <p id="detectionTimeValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

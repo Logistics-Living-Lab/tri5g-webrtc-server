@@ -75,15 +75,14 @@ async def javascript(request):
     return web.Response(content_type="application/javascript", text=content)
 
 
-@aiohttp_jinja2.template('index.html')
+@aiohttp_jinja2.template('pages/video-detection.html')
 async def tailwind(request):
-    # content = open(os.path.join(AppConfig.root_path, "html-files/tailwind-ui.html"), "r").read()
     return {}
 
 
+@aiohttp_jinja2.template('pages/image-analyzer.html')
 async def image_analyzer_html(request):
-    content = open(os.path.join(AppConfig.root_path, "html-files/image-analyzer/index.html"), "r").read()
-    return web.Response(content_type="text/html", text=content)
+    return {}
 
 
 async def image_analyzer_upload_endpoint(request):
