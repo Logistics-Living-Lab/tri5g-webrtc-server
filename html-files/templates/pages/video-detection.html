@@ -3,10 +3,22 @@
 {% block content %}
 <div class="flex space-x-4">
     <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
-        <video class="w-full" width="1920" height="1080" id="video01" autoplay="true" playsinline="true"></video>
+        <div class="text-center py-4">
+            <span class="text-white text-2xl font-semibold">Live</span>
+        </div>
+        <video class="w-full max-h-96" width="1920" height="1080" id="video01" autoplay="true"
+               playsinline="true">
+
+        </video>
     </div>
     <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
-        <video class="w-full" width="1920" height="1080" id="video02" autoplay="true" playsinline="true"></video>
+        <div class="text-center py-4">
+            <span class="text-white text-2xl font-semibold">AI Detection</span>
+        </div>
+        <video class="w-full max-h-96" width="1920" height="1080" id="video02" autoplay="true"
+               playsinline="true">
+
+        </video>
     </div>
 </div>
 <button id="btnConnectLive"
