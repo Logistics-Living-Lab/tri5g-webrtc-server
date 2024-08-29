@@ -1,14 +1,10 @@
 import argparse
 import asyncio
 import base64
-import datetime
 import json
 import logging
 import os
 import ssl
-import cProfile
-import pstats
-import io
 import time
 from pathlib import Path
 
@@ -29,10 +25,8 @@ from middleware.auth import Auth
 from services.connection_manager import ConnectionManager
 from services.telemetry_service import TelemetryService
 from video.detection_service import DetectionService
-from video.transformers.dummy_frame_transformer import DummyFrameTransformer
 from video.transformers.yolo_transformer import YoloTransformer
 from video.video_transform_track import VideoTransformTrack
-from memory_profiler import memory_usage
 
 from video.video_transform_track_debug import VideoTransformTrackDebug
 
@@ -324,8 +318,6 @@ def init_web_app():
 
 async def on_startup(app):
     asyncio.create_task(App.telemetry_service.start())
-    logging.info("")
-
 
 def check_if_user_mode():
     if args.create_user:
