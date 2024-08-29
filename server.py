@@ -305,6 +305,9 @@ def init_web_app():
 
     app.router.add_static("/images", os.path.join(AppConfig.root_path, "html-files/images"))
 
+    app.router.add_static(prefix="/files/images", path=os.path.join(AppConfig.root_path, "records/images"),
+                          show_index=True)
+
     app.router.add_get("/image-analyzer", image_analyzer_html)
     app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
 
@@ -318,6 +321,7 @@ def init_web_app():
 
 async def on_startup(app):
     asyncio.create_task(App.telemetry_service.start())
+
 
 def check_if_user_mode():
     if args.create_user:
