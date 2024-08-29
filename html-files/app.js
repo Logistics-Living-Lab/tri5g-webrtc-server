@@ -4,21 +4,26 @@
 $(document).ready(() => {
     function fetchModels() {
         $.ajax("/api/models", {
-            type: 'GET',
-            success: (data) => {
-                for (model of data) {
-                    html = renderModelOption(model.id)
-                    $("#modelOptionsDiv").append(html)
+            type: 'GET', success: (data) => {
+                console.log(data)
+                for (const [index, model] of data.entries()) {
+                    const selected = index === 0
+                    const $html = $(renderModelOption(model.id, model.name, selected))
+                    if (selected) {
+                        $html.find('input[type="radio"]').prop('checked', true);
+                    }
+
+                    $("#modelOptionsDiv").append($html)
                 }
             }
         })
     }
 
-    function renderModelOption(modelId) {
+    function renderModelOption(modelId, modelName, selected) {
         return `
         <label class="flex items-center space-x-2">
             <input type="radio" name="modelId" value="${modelId}" class="form-radio text-blue-600">
-            <span>${modelId}</span>
+            <span>${modelName}</span>
         </label>
         `
     }
@@ -250,7 +255,8 @@ $(document).ready(() => {
 
             $.ajax({
                 url: '/image-analyzer-upload', // Replace with your REST API endpoint
-                type: 'POST', data: JSON.stringify({image: base64String, modelId: selectedValue}),
+                type: 'POST',
+                data: JSON.stringify({image: base64String, modelId: selectedValue}),
                 contentType: 'application/json',
                 success: function (response) {
                     const base64Image = response.image;

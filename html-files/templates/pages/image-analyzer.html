@@ -3,6 +3,7 @@
 {% block content %}
 <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
     <h2 class="text-2xl font-bold mb-4">Upload Image</h2>
+    <div id="modelOptionsDiv" class="flex items-center space-x-2 mb-4"></div>
     <form id="uploadForm" class="space-y-4">
         <input type="file" id="imageInput" name="image" class="block w-full text-sm text-gray-500
                 file:mr-4 file:py-2 file:px-4
@@ -10,6 +11,7 @@
                 file:text-sm file:font-semibold
                 file:bg-blue-50 file:text-blue-700
                 hover:file:bg-blue-100"/>
+        <div id="response" class="mt-4"></div>
         <div id="previewContainer" class="mt-4" style="display: none">
             <img id="previewImage" class="max-w-full mx-auto rounded-lg shadow-lg" alt="Image Preview">
         </div>
@@ -18,10 +20,8 @@
                     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Analyze
             </button>
-            <div id="modelOptionsDiv" class="flex items-center space-x-2">
-            </div>
         </div>
     </form>
-    <div id="response" class="mt-4"></div>
+
 </div>
 {% endblock %}

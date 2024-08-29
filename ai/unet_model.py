@@ -15,8 +15,8 @@ from detector import load_segmentator
 
 class UnetModel(AiModel):
 
-    def __init__(self, model_id: str, model_config_file: str):
-        super().__init__(model_id, 'unet')
+    def __init__(self, model_id: str, model_name: str, model_config_file: str):
+        super().__init__(model_id, model_name, 'unet')
         self.model_config_file = ""
         self.detector = None
         self.segmentator = None

@@ -13,8 +13,8 @@ from ai.ai_model import AiModel
 
 class YoloModel(AiModel):
 
-    def __init__(self, model_id: str, model_file_path: str, conf_th: float = 0.5):
-        super().__init__(model_id, 'yolo')
+    def __init__(self, model_id: str, model_name: str, model_file_path: str, conf_th: float = 0.5):
+        super().__init__(model_id, model_name, 'yolo')
         self.yolo_model: YOLO | None = None
         self.conf_th = conf_th
         self.__load_yolo(model_file_path)

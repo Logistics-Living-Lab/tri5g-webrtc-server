@@ -121,7 +121,7 @@ async def image_analyzer_upload_endpoint(request):
 
 async def models_api_endpoint(request):
     models = App.detection_service.models
-    models_json = [{'id': model.model_id} for model in models]
+    models_json = [{'id': model.model_id, 'name': model.model_name} for model in models]
     return web.json_response(models_json)
 
 
