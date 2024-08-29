@@ -10,96 +10,124 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="app.js"></script>
 </head>
-<body class="bg-gray-900 flex flex-col items-center justify-center h-screen">
-<div class="flex space-x-4">
-    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
-        <video class="w-full" width="1920" height="1080" id="video01" autoplay="true" playsinline="true"></video>
+<body class="bg-gray-900 flex flex-col min-h-screen">
+<!-- Header -->
+<header class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto flex items-center justify-between px-4">
+        <!-- Logo -->
+        <div class="flex-shrink-0">
+            <a href="/">
+                <img src="https://via.placeholder.com/150x50?text=Logo" alt="Logo" class="h-10">
+            </a>
+        </div>
+        <!-- Navigation -->
+        <nav class="hidden md:flex space-x-6">
+            <a href="#" class="hover:underline">Home</a>
+            <a href="#" class="hover:underline">About</a>
+            <a href="#" class="hover:underline">Services</a>
+            <a href="#" class="hover:underline">Contact</a>
+        </nav>
+        <!-- CTA Button -->
+        <div>
+            <a href="#" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                Get Started
+            </a>
+        </div>
     </div>
-    <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
-        <video class="w-full" width="1920" height="1080" id="video02" autoplay="true" playsinline="true"></video>
-    </div>
-</div>
-<button id="btnConnectLive"
-        class="bg-blue-500 m-8 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
-    Connect to Live Stream
-</button>
+</header>
 
-<div class="flex space-x-4">
-    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+<div class="flex flex-col flex-grow items-center justify-center">
+    <div class="flex space-x-4">
+        <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+            <video class="w-full" width="1920" height="1080" id="video01" autoplay="true" playsinline="true"></video>
+        </div>
+        <div class="bg-gray-800 shadow-lg rounded-lg overflow-hidden w-1/2">
+            <video class="w-full" width="1920" height="1080" id="video02" autoplay="true" playsinline="true"></video>
+        </div>
+    </div>
+    <button id="btnConnectLive"
+            class="bg-blue-500 m-8 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+        Connect to Live Stream
+    </button>
+
+    <div class="flex space-x-4">
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-center">
+                        <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                        <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p id="rttCamera" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                        <p class="text-gray-600 mt-2">
+                            Camera
+                            <i class="fas fa-arrow-left"></i>
+                            <i class="fas fa-arrow-right"></i>
+                            Server
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-center">
+                        <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                        <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p id="rttValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                        <p class="text-gray-600 mt-2">
+                            Server
+                            <i class="fas fa-arrow-left"></i>
+                            <i class="fas fa-arrow-right"></i>
+                            User
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="px-6 py-4">
                 <div class="flex items-center justify-center">
                     <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
-                    <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">FPS (Decoding)</h2>
                 </div>
                 <div class="text-center mt-4">
-                    <p id="rttCamera" class="text-4xl text-blue-600 mt-4">0 ms</p>
-                    <p class="text-gray-600 mt-2">
-                        Camera
-                        <i class="fas fa-arrow-left"></i>
-                        <i class="fas fa-arrow-right"></i>
-                        Server
-                    </p>
+                    <p id="fpsDecodingValue" class="text-4xl text-blue-600 mt-4">0</p>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
         <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="px-6 py-4">
                 <div class="flex items-center justify-center">
                     <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
-                    <h2 class="text-2xl font-bold text-gray-800">Round-Trip-Time</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">FPS (Detection)</h2>
                 </div>
                 <div class="text-center mt-4">
-                    <p id="rttValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
-                    <p class="text-gray-600 mt-2">
-                        Server
-                        <i class="fas fa-arrow-left"></i>
-                        <i class="fas fa-arrow-right"></i>
-                        User
-                    </p>
+                    <p id="fpsDetectionValue" class="text-4xl text-blue-600 mt-4">0</p>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-center">
-                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
-                <h2 class="text-2xl font-bold text-gray-800">FPS (Decoding)</h2>
-            </div>
-            <div class="text-center mt-4">
-                <p id="fpsDecodingValue" class="text-4xl text-blue-600 mt-4">0</p>
-            </div>
-        </div>
-    </div>
-    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-center">
-                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
-                <h2 class="text-2xl font-bold text-gray-800">FPS (Detection)</h2>
-            </div>
-            <div class="text-center mt-4">
-                <p id="fpsDetectionValue" class="text-4xl text-blue-600 mt-4">0</p>
-            </div>
-        </div>
-    </div>
-    <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-center">
-                <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
-                <h2 class="text-2xl font-bold text-gray-800">Detection Time</h2>
-            </div>
-            <div class="text-center mt-4">
-                <p id="detectionTimeValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+        <div class="max-w-sm mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-center">
+                    <div class="blinking h-4 w-4 bg-green-500 rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold text-gray-800">Detection Time</h2>
+                </div>
+                <div class="text-center mt-4">
+                    <p id="detectionTimeValue" class="text-4xl text-blue-600 mt-4">0 ms</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 <footer class="bg-gray-800 text-white text-center py-4 w-full absolute bottom-0">
     <p>Made with <i class="fas fa-heart text-red-500"></i> in Leipzig, Germany</p>
-    <p>&copy; 2024 Logistics Living Lab / Leipzig University.</p>
+    <p>&copy; 2024 Logistics Living Lab / Leipzig University - Logos and trademarks are the property of their
+        respective owners.</p>
 </footer>
 </body>
 </html>
