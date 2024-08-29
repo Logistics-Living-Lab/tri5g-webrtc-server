@@ -12,8 +12,10 @@ import io
 import time
 from pathlib import Path
 
+import aiohttp_jinja2
 import av
 import cv2
+import jinja2
 import numpy as np
 
 import torch
@@ -73,9 +75,10 @@ async def javascript(request):
     return web.Response(content_type="application/javascript", text=content)
 
 
+@aiohttp_jinja2.template('index.html')
 async def tailwind(request):
-    content = open(os.path.join(AppConfig.root_path, "html-files/tailwind-ui.html"), "r").read()
-    return web.Response(content_type="text/html", text=content)
+    # content = open(os.path.join(AppConfig.root_path, "html-files/tailwind-ui.html"), "r").read()
+    return {}
 
 
 async def image_analyzer_html(request):
@@ -298,6 +301,8 @@ def init_web_app():
     loop.set_debug(True)
 
     app = web.Application()
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(os.path.join(AppConfig.root_path, "html-files/templates")))
+
     app.middlewares.append(App.auth_service.basic_auth_middleware)
 
     app.on_shutdown.append(on_shutdown)
