@@ -15,16 +15,20 @@ class Auth:
         self.logger = logging.getLogger(__name__)
         self.auth_file = auth_file
 
+    def __401_response(self):
+        return web.Response(status=401, headers={'WWW-Authenticate': 'Basic realm="Login Required"'},
+                            content_type='text/plain', text="Login required")
+
     @web.middleware
     async def basic_auth_middleware(self, request, handler):
         auth_header = request.headers.get('Authorization')
 
         if auth_header is None:
-            return web.Response(status=401, headers={'WWW-Authenticate': 'Basic realm="Login Required"'})
+            return self.__401_response()
 
         auth_type, encoded_credentials = auth_header.split(' ', 1)
         if auth_type.lower() != 'basic':
-            return web.Response(status=401, headers={'WWW-Authenticate': 'Basic realm="Login Required"'})
+            return self.__401_response()
 
         decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
         username, password = decoded_credentials.split(':', 1)
@@ -32,7 +36,7 @@ class Auth:
         if self.check_credentials(username, password):
             return await handler(request)
 
-        return web.Response(status=401, headers={'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return self.__401_response()
 
     def create_user(self, username: str, password: str):
         users = self.__load_user_from_file()
