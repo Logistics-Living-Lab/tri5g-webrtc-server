@@ -84,7 +84,10 @@ async def image_analyzer_upload_endpoint(request):
     contentJson = json.loads(contentBytes.decode())
 
     image_base64 = contentJson['image']
-    model_id = contentJson['modelId']
+
+    model_id = "fence-detection-unet"
+    if 'modelId' in contentJson:
+        model_id = contentJson['modelId']
 
     # Convert the image data to a numpy array
     np_data = np.frombuffer(base64.b64decode(image_base64), np.uint8)
