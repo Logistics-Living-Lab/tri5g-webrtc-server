@@ -24,9 +24,9 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
         transformed_frame.dts = frame.dts
         transformed_frame.time_base = frame.time_base
         self.__current_frame = transformed_frame
+        self.__is_processing_frame = False
         self.detection_time = self.video_transformer.measured_detection_time_ms
         self.__transformed_frames_count += 1
-        self.__is_processing_frame = False
 
     def on_track_ended(self):
         self.__transformation_task.cancel()
