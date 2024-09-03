@@ -96,6 +96,7 @@ $(document).ready(() => {
             console.log(evt)
         })
         pc.addEventListener('track', (evt) => {
+            console.log(evt.transceiver.mid)
             const constraints = {};
 
             if (evt.track.kind === 'video') {
