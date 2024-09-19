@@ -79,6 +79,11 @@ async def image_analyzer_html(request):
     return {}
 
 
+@aiohttp_jinja2.template('pages/image-detection.html')
+async def image_detection_html(request):
+    return {}
+
+
 async def image_analyzer_upload_endpoint(request):
     contentBytes = await request.content.read()
     contentJson = json.loads(contentBytes.decode())
@@ -120,6 +125,22 @@ async def models_api_endpoint(request):
     models = App.detection_service.models
     models_json = [{'id': model.model_id, 'name': model.model_name} for model in models]
     return web.json_response(models_json)
+
+
+async def photos_api_endpoint(request):
+    image_dir = os.path.join(AppConfig.root_path, "records/images")
+    files = [f for f in os.listdir(image_dir) if os.path.isfile(os.path.join(image_dir, f))]
+    files_sorted_by_mtime = sorted(files, key=lambda x: os.path.getmtime(os.path.join(image_dir, x)), reverse=True)
+
+    original_files = [f"files/images/{f}" for f in files_sorted_by_mtime if 'original' in f]
+    processed_files = [f"files/images/{f}" for f in files_sorted_by_mtime if 'processed' in f]
+
+    files_json = {
+        'original': original_files,
+        'processed': processed_files
+    }
+
+    return web.json_response(files_json)
 
 
 async def offer_producer(request):
@@ -319,6 +340,9 @@ def init_web_app():
 
     app.router.add_get("/image-analyzer", image_analyzer_html)
     app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
+
+    app.router.add_get("/image-detection", image_detection_html)
+    app.router.add_get("/api/photo-files", photos_api_endpoint)
 
     app.router.add_get("/api/models", models_api_endpoint)
 

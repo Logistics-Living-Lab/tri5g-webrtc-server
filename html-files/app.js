@@ -19,6 +19,23 @@ $(document).ready(() => {
         })
     }
 
+    function getLatestPhoto() {
+        $.ajax("/api/models", {
+            type: 'GET', success: (data) => {
+                console.log(data)
+                for (const [index, model] of data.entries()) {
+                    const selected = index === 0
+                    const $html = $(renderModelOption(model.id, model.name, selected))
+                    if (selected) {
+                        $html.find('input[type="radio"]').prop('checked', true);
+                    }
+
+                    $("#modelOptionsDiv").append($html)
+                }
+            }
+        })
+    }
+
     function renderModelOption(modelId, modelName, selected) {
         return `
         <label class="flex items-center space-x-2">
