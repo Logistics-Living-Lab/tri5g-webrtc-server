@@ -23,11 +23,12 @@ $(document).ready(() => {
         })
     }
 
-    $("#detectionImageOriginal").on("load", () => {
+
+    function onOriginalPhotoReceived() {
         $("#detectionImageProcessed").attr('src', latestPhotoOriginal)
         $("#processingOverlay").show()
         $("#detectionImageProcessed").addClass('blinking');
-    })
+    }
 
     function onProcessedPhotoReceived() {
         $("#detectionImageProcessed").removeClass('blinking');
@@ -49,7 +50,9 @@ $(document).ready(() => {
                                 setTimeout(() => {
                                     toast.removeClass('toast-show');
                                 }, 5000);
+                                $("#detectionImageOriginal").on("load", onOriginalPhotoReceived)
                                 $("#detectionImageOriginal").attr('src', latestPhotoOriginal)
+                                $("#detectionImageOriginal").off("load")
                             }
                         }
                     }
