@@ -25,15 +25,16 @@ $(document).ready(() => {
 
 
     function onOriginalPhotoReceived() {
+        $("#detectionImageOriginal").off("load")
         $("#detectionImageProcessed").attr('src', latestPhotoOriginal)
         $("#processingOverlay").show()
         $("#detectionImageProcessed").addClass('blinking');
     }
 
     function onProcessedPhotoReceived() {
+        $("#detectionImageProcessed").off("load")
         $("#detectionImageProcessed").removeClass('blinking');
         $("#processingOverlay").hide()
-        $("#detectionImageProcessed").off("load")
     }
 
     function getLatestPhoto(callback) {
@@ -52,7 +53,6 @@ $(document).ready(() => {
                                 }, 5000);
                                 $("#detectionImageOriginal").on("load", onOriginalPhotoReceived)
                                 $("#detectionImageOriginal").attr('src', latestPhotoOriginal)
-                                $("#detectionImageOriginal").off("load")
                             }
                         }
                     }
