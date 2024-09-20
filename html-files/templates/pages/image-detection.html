@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg">
-    <img id="detectionImage"/>
+<div class="h-full flex items-center justify-center">
+    <div class="w-1/2 h-full p-2">
+        <img id="detectionImageOriginal" alt="Image 1" class="w-full h-full object-cover">
+    </div>
+    <div id="processedImageContainer" class="w-1/2 h-full p-2 relative">
+        <img id="detectionImageProcessed" alt="Image 2" class="w-full h-full object-cover">
+        <div id="processingOverlay" class="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+            <span class="text-white text-4xl font-bold">Processing...</span>
+        </div>
+    </div>
 </div>
+
 {% endblock %}

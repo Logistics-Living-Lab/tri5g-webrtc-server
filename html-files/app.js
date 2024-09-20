@@ -2,6 +2,10 @@
 
 
 $(document).ready(() => {
+
+    let latestPhotoOriginal
+    let latestPhotoProcessed
+
     function fetchModels() {
         $.ajax("/api/models", {
             type: 'GET', success: (data) => {
@@ -19,21 +23,61 @@ $(document).ready(() => {
         })
     }
 
-    function getLatestPhoto() {
-        $.ajax("/api/models", {
-            type: 'GET', success: (data) => {
-                console.log(data)
-                for (const [index, model] of data.entries()) {
-                    const selected = index === 0
-                    const $html = $(renderModelOption(model.id, model.name, selected))
-                    if (selected) {
-                        $html.find('input[type="radio"]').prop('checked', true);
-                    }
+    $("#detectionImageOriginal").on("load", () => {
+        $("#detectionImageProcessed").attr('src', latestPhotoOriginal)
+        $("#processingOverlay").show()
+        $("#detectionImageProcessed").addClass('blinking');
+    })
 
-                    $("#modelOptionsDiv").append($html)
+    function onProcessedPhotoReceived() {
+        $("#detectionImageProcessed").removeClass('blinking');
+        $("#processingOverlay").hide()
+        $("#detectionImageProcessed").off("load")
+    }
+
+    function getLatestPhoto(callback) {
+        $.ajax("/api/photo-files", {
+            type: 'GET', success: (data) => {
+                if (data) {
+                    if (data.original && data.original[0]) {
+                        if (latestPhotoOriginal !== data.original[0]) {
+                            latestPhotoOriginal = data.original[0]
+                            $("#detectionImageOriginal").attr('src', latestPhotoOriginal)
+                        }
+                    }
+                    if (data.processed && data.processed[0]) {
+                        if (latestPhotoProcessed !== data.processed[0]) {
+                            latestPhotoProcessed = data.processed[0]
+                            $("#detectionImageProcessed").on("load", onProcessedPhotoReceived)
+                            $("#detectionImageProcessed").attr('src', latestPhotoProcessed)
+                        }
+                    }
                 }
+
+                // for (const [index, model] of data.entries()) {
+                //     const selected = index === 0
+                //     const $html = $(renderModelOption(model.id, model.name, selected))
+                //     if (selected) {
+                //         $html.find('input[type="radio"]').prop('checked', true);
+                //     }
+                //
+                //     $("#modelOptionsDiv").append($html)
+                // }
             }
         })
+    }
+
+    function startPhotoCheck() {
+        setInterval(() => {
+            getLatestPhoto()
+        }, 1000)
+    }
+
+    if ($('#detectionImageOriginal')) {
+        getLatestPhoto(() => {
+
+        })
+        startPhotoCheck()
     }
 
     function renderModelOption(modelId, modelName, selected) {
