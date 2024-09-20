@@ -41,15 +41,26 @@ $(document).ready(() => {
                 if (data) {
                     if (data.original && data.original[0]) {
                         if (latestPhotoOriginal !== data.original[0]) {
+                            firstLoad = latestPhotoOriginal === undefined
                             latestPhotoOriginal = data.original[0]
-                            $("#detectionImageOriginal").attr('src', latestPhotoOriginal)
+                            if (!firstLoad) {
+                                const toast = $('#toast');
+                                toast.addClass('toast-show')
+                                setTimeout(() => {
+                                    toast.removeClass('toast-show');
+                                }, 5000);
+                                $("#detectionImageOriginal").attr('src', latestPhotoOriginal)
+                            }
                         }
                     }
                     if (data.processed && data.processed[0]) {
                         if (latestPhotoProcessed !== data.processed[0]) {
+                            firstLoad = latestPhotoProcessed === undefined
                             latestPhotoProcessed = data.processed[0]
-                            $("#detectionImageProcessed").on("load", onProcessedPhotoReceived)
-                            $("#detectionImageProcessed").attr('src', latestPhotoProcessed)
+                            if (!firstLoad) {
+                                $("#detectionImageProcessed").on("load", onProcessedPhotoReceived)
+                                $("#detectionImageProcessed").attr('src', latestPhotoProcessed)
+                            }
                         }
                     }
                 }
