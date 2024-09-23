@@ -82,11 +82,9 @@ $(document).ready(() => {
 
                         return resolve(
                             waitForImageToLoad(detectionImageOriginalElement)
-                                .then((result) => console.log(result))
                                 .then(
                                     () => waitForImageToLoad(detectionImageProcessed)
                                 )
-                                .then((result) => console.log(result))
                         )
                     }
                 }
@@ -102,7 +100,6 @@ $(document).ready(() => {
                     firstLoad = latestPhotoProcessed === undefined
                     latestPhotoProcessed = data.processed[0]
                     if (!firstLoad && latestPhotoProcessed === latestPhotoOriginal.replace("original", "processed")) {
-                        console.log(latestPhotoProcessed)
                         const detectionImageProcessed = $("#detectionImageProcessed")
                         detectionImageProcessed.on("load", onProcessedPhotoReceived)
                         detectionImageProcessed.attr('src', latestPhotoProcessed)
@@ -121,7 +118,6 @@ $(document).ready(() => {
                 type: 'GET', success: (data) => {
                     if (data) {
                         return resolve(checkOriginalImageElement(data)
-                            .then(result => console.log(result))
                             .then(
                                 () => checkProcessedImageElement(data)
                             )
@@ -412,7 +408,6 @@ function asyncInterval(fn, delay) {
     let isRunning = false;
 
     const interval = async () => {
-        console.log("Check")
         if (isRunning) return;
 
         isRunning = true;
@@ -423,7 +418,6 @@ function asyncInterval(fn, delay) {
         }
         isRunning = false;
 
-        console.log(delay)
         setTimeout(interval, delay);  // Schedule the next call after the delay
     };
 
