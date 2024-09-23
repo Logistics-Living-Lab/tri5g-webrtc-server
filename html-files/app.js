@@ -41,7 +41,8 @@ $(document).ready(() => {
         $("#processingOverlay").hide()
     }
 
-    function waitForImageToLoad(imgElement) {
+    async function waitForImageToLoad(imgJqueryObject) {
+        const imgElement = imgJqueryObject[0]
         return new Promise((resolve, reject) => {
             // Check if the image is already loaded (for cached images)
             if (imgElement.complete && imgElement.naturalHeight !== 0) {
@@ -59,7 +60,7 @@ $(document).ready(() => {
         })
     }
 
-    function checkOriginalImageElement(data) {
+    async function checkOriginalImageElement(data) {
         return new Promise((resolve, reject) => {
             if (data.original && data.original[0]) {
                 if (!processing && latestPhotoOriginal !== data.original[0]) {
@@ -79,10 +80,14 @@ $(document).ready(() => {
                         detectionImageOriginalElement.attr('src', latestPhotoOriginal)
                         detectionImageProcessed.attr('src', latestPhotoOriginal)
 
-                        return waitForImageToLoad(detectionImageOriginalElement)
-                            .then(
-                                () => waitForImageToLoad(detectionImageProcessed)
-                            )
+                        return resolve(
+                            waitForImageToLoad(detectionImageOriginalElement)
+                                .then((result) => console.log(result))
+                                .then(
+                                    () => waitForImageToLoad(detectionImageProcessed)
+                                )
+                                .then((result) => console.log(result))
+                        )
                     }
                 }
             }
@@ -90,7 +95,7 @@ $(document).ready(() => {
         })
     }
 
-    function checkProcessedImageElement(data) {
+    async function checkProcessedImageElement(data) {
         return new Promise((resolve, reject) => {
             if (data.processed && data.processed[0]) {
                 if (latestPhotoProcessed !== data.processed[0]) {
@@ -101,7 +106,8 @@ $(document).ready(() => {
                         const detectionImageProcessed = $("#detectionImageProcessed")
                         detectionImageProcessed.on("load", onProcessedPhotoReceived)
                         detectionImageProcessed.attr('src', latestPhotoProcessed)
-                        return waitForImageToLoad(detectionImageProcessed)
+                        const result = waitForImageToLoad(detectionImageProcessed)
+                        return resolve(result)
                     }
                 }
             }
@@ -109,27 +115,37 @@ $(document).ready(() => {
         })
     }
 
-    function getLatestPhoto(callback) {
-        $.ajax("/api/photo-files", {
-            type: 'GET', success: (data) => {
-                if (data) {
-                    checkOriginalImageElement(data)
-                        .then(() => checkProcessedImageElement(data))
+    async function getLatestPhoto(callback) {
+        return new Promise((resolve, reject) => {
+            $.ajax("/api/photo-files", {
+                type: 'GET', success: (data) => {
+                    if (data) {
+                        return resolve(checkOriginalImageElement(data)
+                            .then(result => console.log(result))
+                            .then(
+                                () => checkProcessedImageElement(data)
+                            )
+                        )
+                    }
+                    return resolve()
                 }
-            }
+            })
         })
     }
 
     function startPhotoCheck() {
-        setInterval(() => {
-            getLatestPhoto()
-        }, 1000)
+        asyncInterval(getLatestPhoto, 1000)
+
+        // setInterval(() => {
+        //     getLatestPhoto()
+        // }, 1000)
+
     }
 
     if ($('#detectionImageOriginal')) {
-        getLatestPhoto(() => {
-
-        })
+        // getLatestPhoto(() => {
+        //
+        // })
         startPhotoCheck()
     }
 
@@ -391,3 +407,29 @@ $(document).ready(() => {
         reader.readAsDataURL(imageFile);
     });
 })
+
+function asyncInterval(fn, delay) {
+    let isRunning = false;
+
+    const interval = async () => {
+        console.log("Check")
+        if (isRunning) return;
+
+        isRunning = true;
+        try {
+            await fn();  // Wait for the Promise to resolve
+        } catch (err) {
+            console.error('Error in interval function:', err);
+        }
+        isRunning = false;
+
+        console.log(delay)
+        setTimeout(interval, delay);  // Schedule the next call after the delay
+    };
+
+    interval();  // Start the interval
+
+    return () => {
+        isRunning = false;
+    };  // Return a function to cancel the interval
+}
