@@ -314,6 +314,18 @@ def init_app_services(stun_server):
     App.auth_service = Auth(os.path.join(AppConfig.root_path, "auth.json"))
 
 
+def photo_index_page(request):
+    path = os.path.join(AppConfig.root_path, "records/images")
+    files = sorted(os.listdir(path), reverse=True)  # Customize your sorting here
+    html_content = "<html><body><ul>"
+
+    for file in files:
+        html_content += f'<li><a href="/files/images/{file}">{file}</a></li>'
+
+    html_content += "</ul></body></html>"
+    return web.Response(content_type="text/html", text=html_content)
+
+
 def init_web_app():
     if torch.cuda.is_available():
         logging.info("CUDA is available 🚀🚀🚀")
@@ -335,8 +347,9 @@ def init_web_app():
 
     app.router.add_static("/images", os.path.join(AppConfig.root_path, "html-files/images"))
 
-    app.router.add_static(prefix="/files/images", path=os.path.join(AppConfig.root_path, "records/images"),
-                          show_index=True)
+    app.router.add_get("/image-files", photo_index_page)
+
+    app.router.add_static(prefix="/files/images", path=os.path.join(AppConfig.root_path, "records/images"))
 
     app.router.add_get("/image-analyzer", image_analyzer_html)
     app.router.add_post("/image-analyzer-upload", image_analyzer_upload_endpoint)
