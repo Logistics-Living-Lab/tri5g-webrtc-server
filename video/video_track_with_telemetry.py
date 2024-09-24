@@ -44,6 +44,8 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
             self.fps_received = self.__received_frames / passed_seconds
             self.fps_decoded = self.__decoded_incoming_frames / passed_seconds
 
+            self.on_calculate_fps(passed_seconds)
+
             logging.info("###############################")
             logging.info(f"{self.name}")
             logging.info(f"Passed seconds: {passed_seconds}")
@@ -61,3 +63,6 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
             # App.telemetry_service.detection_time = self.__detection_time
 
             await asyncio.sleep(VideoTrackWithTelemetry.PRINT_TELEMETRY_DATA_IN_SECONDS)
+
+    def on_calculate_fps(self, passed_seconds):
+        return None

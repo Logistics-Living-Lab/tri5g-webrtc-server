@@ -11,6 +11,7 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
         self.logger = logging.getLogger(__name__)
         self.video_transformer: VideoTransformer = video_transformer
         self.detection_time = 0
+        self.fps_detected = 0
 
         self.__is_processing_frame = False
         self.__current_frame = None
@@ -47,3 +48,7 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
             self.__transformation_task = asyncio.create_task(self.create_transformation_task(frame))
 
         return self.__current_frame
+
+    def on_calculate_fps(self, passed_seconds):
+        self.fps_detected = self.__transformed_frames_count / passed_seconds
+        self.__transformed_frames_count = 0

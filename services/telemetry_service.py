@@ -15,7 +15,7 @@ class TelemetryService:
         self.__connection_manager = connection_manager
         self.rtt_camera = 0
         self.fps_decoded = 0
-        self.fps_detection = 0
+        self.fps_detected = 0
         self.detection_time = 0
         self.send_telemetry_task: asyncio.Task | None = None
 
@@ -44,13 +44,14 @@ class TelemetryService:
                             self.fps_decoded = subscription.fps_decoded
                         if isinstance(subscription, VideoTransformTrack):
                             self.detection_time = subscription.detection_time
+                            self.fps_detected = subscription.fps_detected
 
                 # Send statistics
                 coros.append(
                     asyncio.create_task(
                         connection.send_statistics(self.rtt_camera,
                                                    self.fps_decoded,
-                                                   self.fps_decoded,
+                                                   self.fps_detected,
                                                    self.detection_time)
                     )
                 )
