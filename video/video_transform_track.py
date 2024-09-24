@@ -37,7 +37,6 @@ class VideoTransformTrack(VideoTrackWithTelemetry):
             self.__current_frame = frame
 
         self.__current_frame.pts = frame.pts
-        self.__current_frame.time_base = frame.time_base
         self.__current_frame.dts = frame.dts
 
         if self.__is_processing_frame:

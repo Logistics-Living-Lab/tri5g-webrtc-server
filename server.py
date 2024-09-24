@@ -229,13 +229,13 @@ async def offer_producer(request):
             #                                                                                 confidence_threshold=0.51))
 
             # Needed to start Video Tracks and analytics
-            # blackhole1 = MediaBlackhole()
-            # blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
-            # await blackhole1.start()
-            #
-            # blackhole2 = MediaBlackhole()
-            # blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            # await blackhole2.start()
+            blackhole1 = MediaBlackhole()
+            blackhole1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            await blackhole1.start()
+
+            blackhole2 = MediaBlackhole()
+            blackhole2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            await blackhole2.start()
 
             video_records_dir = os.path.join(AppConfig.records_directory(), "videos")
             Path.mkdir(Path(video_records_dir), exist_ok=True, parents=True)
