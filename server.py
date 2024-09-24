@@ -240,23 +240,23 @@ async def offer_producer(request):
             video_records_dir = os.path.join(AppConfig.records_directory(), "videos")
             Path.mkdir(Path(video_records_dir), exist_ok=True, parents=True)
 
-            recorder1 = MediaRecorder(
-                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
-            recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
-            await recorder1.start()
-
-            recorder2 = MediaRecorder(
-                os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
-            recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
-            await recorder2.start()
+            # recorder1 = MediaRecorder(
+            #     os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-1.mp4"))
+            # recorder1.addTrack(App.connection_manager.media_relay.subscribe(track1))
+            # await recorder1.start()
+            #
+            # recorder2 = MediaRecorder(
+            #     os.path.join(video_records_dir, time.strftime('%Y%m%d-%H_%M_%S') + "-track-2.mp4"))
+            # recorder2.addTrack(App.connection_manager.media_relay.subscribe(track2))
+            # await recorder2.start()
 
             peer_connection.subscriptions.append(track1)
             peer_connection.subscriptions.append(track2)
 
         @track.on("ended")
         async def on_ended():
-            await recorder1.stop()
-            await recorder2.stop()
+            # await recorder1.stop()
+            # await recorder2.stop()
             logging.info("Track %s ended", track.kind)
 
     # handle offer
