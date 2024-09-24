@@ -10,8 +10,8 @@ from av import VideoFrame
 class VideoTrackWithTelemetry(MediaStreamTrack):
     MAX_WIDTH = 1280
     MAX_HEIGHT = 720
-    #MAX_WIDTH = 320
-    #MAX_HEIGHT = 240
+    # MAX_WIDTH = 320
+    # MAX_HEIGHT = 240
 
     PRINT_TELEMETRY_DATA_IN_SECONDS = 10
     kind = "video"
@@ -62,9 +62,11 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
                 # Resize the image
                 resized_img = cv2.resize(img, (new_width, new_height))
                 transformed_frame = frame.from_ndarray(resized_img, format="bgr24")
+                transformed_frame.key_frame = frame.key_frame
                 transformed_frame.pts = frame.pts
                 transformed_frame.dts = frame.dts
                 transformed_frame.time_base = frame.time_base
+
                 frame = transformed_frame
 
             self.__next_expected_pts = now_pts_seconds + (self.__frame_interval * 0.5)  # pts is wrong?
