@@ -8,10 +8,10 @@ from av import VideoFrame
 
 
 class VideoTrackWithTelemetry(MediaStreamTrack):
-    #MAX_WIDTH = 1280
-    #MAX_HEIGHT = 720
-    MAX_WIDTH = 320
-    MAX_HEIGHT = 240
+    MAX_WIDTH = 1280
+    MAX_HEIGHT = 720
+    # MAX_WIDTH = 320
+    # MAX_HEIGHT = 240
 
     PRINT_TELEMETRY_DATA_IN_SECONDS = 10
     kind = "video"
