@@ -2,8 +2,6 @@ import asyncio
 import gc
 import logging
 
-from memory_profiler import memory_usage
-
 from services.connection_manager import ConnectionManager
 from video.video_track_with_telemetry import VideoTrackWithTelemetry
 from video.video_transform_track import VideoTransformTrack
