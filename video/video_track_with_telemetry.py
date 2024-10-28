@@ -80,6 +80,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__dropped_frames += 1
         self.__last_frame.pts = frame.pts
         self.__last_frame.dts = frame.dts
+        self.__last_frame.time = frame.time
         return self.__last_frame
 
     async def on_frame_received(self, frame) -> VideoFrame:
