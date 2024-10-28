@@ -31,7 +31,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__telemetry_task = asyncio.create_task(self.calculate_fps())
         self.__max_fps = max_fps
         self.__frame_interval = (1.0 / self.__max_fps)  # '* 1.10  # 10% tolerance
-        self.__next_expected_frame_time = 0
+        self.__next_expected_pts = 0
         self.on("ended", self.on_track_ended)
 
     def on_track_ended(self):
@@ -45,13 +45,11 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         if self.__last_frame is None:
             self.__last_frame = frame
 
-        frame_time_now = frame.time  # In Seconds
-        logging.info(f"Frame time now: {frame_time_now}")
-        logging.info(f"Next expected: {self.__next_expected_frame_time}")
-        logging.info(f"PTS: {frame.pts}")
-
-        if frame_time_now >= self.__next_expected_frame_time:
-            self.__next_expected_frame_time = frame_time_now + self.__frame_interval
+        now_pts_seconds = frame.time * frame.time_base
+        logging.info(f"Now: {now_pts_seconds}")
+        logging.info(f"Expected: {self.__next_expected_pts}")
+        logging.info(f"Drop: {now_pts_seconds >= self.__next_expected_pts}")
+        if now_pts_seconds >= self.__next_expected_pts:
 
             # Check max size
             if frame.width > self.MAX_WIDTH or frame.height > self.MAX_HEIGHT:
@@ -73,6 +71,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
 
                 frame = transformed_frame
 
+            self.__next_expected_pts = now_pts_seconds + self.__frame_interval  # pts is wrong?
             self.__last_frame = frame
             self.__decoded_incoming_frames += 1
             return await self.on_frame_received(frame)
@@ -80,7 +79,6 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__dropped_frames += 1
         self.__last_frame.pts = frame.pts
         self.__last_frame.dts = frame.dts
-        self.__last_frame.time = frame.time
         return self.__last_frame
 
     async def on_frame_received(self, frame) -> VideoFrame:
