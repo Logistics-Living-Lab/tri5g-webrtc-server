@@ -31,7 +31,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__telemetry_task = asyncio.create_task(self.calculate_fps())
         self.__max_fps = max_fps
         self.__frame_interval = (1.0 / self.__max_fps)  # '* 1.10  # 10% tolerance
-        self.__next_expected_pts = 0
+        self.__next_expected_frame_time = 0
         self.on("ended", self.on_track_ended)
 
     def on_track_ended(self):
@@ -45,8 +45,8 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         if self.__last_frame is None:
             self.__last_frame = frame
 
-        now_pts_seconds = frame.time / 1_000_000
-        if now_pts_seconds >= self.__next_expected_pts:
+        frame_time_now = frame.time  # In Seconds
+        if frame_time_now >= self.__next_expected_frame_time:
 
             # Check max size
             if frame.width > self.MAX_WIDTH or frame.height > self.MAX_HEIGHT:
@@ -68,7 +68,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
 
                 frame = transformed_frame
 
-            self.__next_expected_pts = now_pts_seconds + (self.__frame_interval * 0.5)  # pts is wrong?
+            self.__next_expected_frame_time = frame_time_now + self.__frame_interval
             self.__last_frame = frame
             self.__decoded_incoming_frames += 1
             return await self.on_frame_received(frame)
