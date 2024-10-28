@@ -45,7 +45,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         if self.__last_frame is None:
             self.__last_frame = frame
 
-        now_pts_seconds = frame.time * frame.time_base
+        now_pts_seconds = frame.time / frame.time_base
         logging.info(f"Now: {now_pts_seconds}")
         logging.info(f"Expected: {self.__next_expected_pts}")
         logging.info(f"Drop: {now_pts_seconds >= self.__next_expected_pts}")
