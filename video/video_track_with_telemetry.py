@@ -72,9 +72,9 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
                 frame = transformed_frame
 
             self.__next_expected_pts = now_pts_seconds + self.__frame_interval  # pts is wrong?
-            self.__last_frame = frame
             self.__decoded_incoming_frames += 1
-            return await self.on_frame_received(frame)
+            self.__last_frame = await self.on_frame_received(frame)
+            return self.__last_frame
 
         self.__dropped_frames += 1
         self.__last_frame.pts = frame.pts
