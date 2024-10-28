@@ -48,7 +48,8 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         frame_time_now = frame.time  # In Seconds
         logging.info(f"Frame time now: {frame_time_now}")
         logging.info(f"Next expected: {self.__next_expected_frame_time}")
-        logging.info(f"{frame_time_now >= self.__next_expected_frame_time}")
+        logging.info(f"PTS: {frame.pts}")
+
         if frame_time_now >= self.__next_expected_frame_time:
             self.__next_expected_frame_time = frame_time_now + self.__frame_interval
 
@@ -71,7 +72,6 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
                 transformed_frame.time_base = frame.time_base
 
                 frame = transformed_frame
-
 
             self.__last_frame = frame
             self.__decoded_incoming_frames += 1
