@@ -46,6 +46,9 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
             self.__last_frame = frame
 
         frame_time_now = frame.time  # In Seconds
+        logging.info(f"Frame time now: {frame_time_now}")
+        logging.info(f"Next expected: {self.__next_expected_frame_time}")
+        logging.info(f"{frame_time_now >= self.__next_expected_frame_time}")
         if frame_time_now >= self.__next_expected_frame_time:
 
             # Check max size
