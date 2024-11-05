@@ -10,8 +10,6 @@ from av import VideoFrame
 class VideoTrackWithTelemetry(MediaStreamTrack):
     MAX_WIDTH = 1280
     MAX_HEIGHT = 720
-    # MAX_WIDTH = 320
-    # MAX_HEIGHT = 240
 
     PRINT_TELEMETRY_DATA_IN_SECONDS = 10
     kind = "video"
@@ -30,7 +28,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__timestamp_start_ns = time.time_ns()
         self.__telemetry_task = asyncio.create_task(self.calculate_fps())
         self.__max_fps = max_fps
-        self.__frame_interval = float(f"{1.0 / self.__max_fps:.3f}")  # '* 1.10  # 10% tolerance
+        self.__frame_interval = float(f"{1.0 / self.__max_fps:.3f}") * 0.9
         self.__next_expected_seconds = 0
         self.__pts_factor = 0
         self.on("ended", self.on_track_ended)
