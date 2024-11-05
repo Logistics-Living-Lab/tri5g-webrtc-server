@@ -30,8 +30,9 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         self.__timestamp_start_ns = time.time_ns()
         self.__telemetry_task = asyncio.create_task(self.calculate_fps())
         self.__max_fps = max_fps
-        self.__frame_interval = (1.0 / self.__max_fps)  # '* 1.10  # 10% tolerance
-        self.__next_expected_pts = 0
+        self.__frame_interval = float(f"{1.0 / self.__max_fps:.3f}")  # '* 1.10  # 10% tolerance
+        self.__next_expected_seconds = 0
+        self.__pts_factor = 0
         self.on("ended", self.on_track_ended)
 
     def on_track_ended(self):
@@ -44,12 +45,24 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
 
         if self.__last_frame is None:
             self.__last_frame = frame
+            if self.__received_frames <= 1:
+                return self.__last_frame
 
-        now_pts_seconds = frame.pts * frame.time_base
-        logging.info(f"Now: {now_pts_seconds}")
-        logging.info(f"Expected: {self.__next_expected_pts}")
-        logging.info(f"Drop: {now_pts_seconds >= self.__next_expected_pts}")
-        if now_pts_seconds >= self.__next_expected_pts:
+        if self.__pts_factor == 0:
+            self.__pts_factor = self.get_pts_factor(frame.time)
+
+        frame_time_now = frame.time / self.__pts_factor
+        logging.info(f"FRAME: {self.__received_frames}")
+        logging.info(f"Now: {frame_time_now}")
+        logging.info(f"Expected: {self.__next_expected_seconds}")
+        logging.info(f"Drop: {frame_time_now < self.__next_expected_seconds}")
+        logging.info(f"PTS factor: {self.__pts_factor}")
+        logging.info(f"Max FPS: {self.__max_fps}")
+        logging.info(f"FPS interval: {self.__frame_interval}")
+        logging.info("#################")
+
+        # If frame is too early drop
+        if frame_time_now >= self.__next_expected_seconds:
 
             # Check max size
             if frame.width > self.MAX_WIDTH or frame.height > self.MAX_HEIGHT:
@@ -71,7 +84,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
 
                 frame = transformed_frame
 
-            self.__next_expected_pts = now_pts_seconds + self.__frame_interval  # pts is wrong?
+            self.__next_expected_seconds = self.__next_expected_seconds + self.__frame_interval  # pts is wrong?
             self.__decoded_incoming_frames += 1
             self.__last_frame = await self.on_frame_received(frame)
             return self.__last_frame
@@ -116,3 +129,15 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
 
     def on_calculate_fps(self, passed_seconds):
         return None
+
+    # PTS has different units per stream - can only be guessed
+    def get_pts_factor(self, frame_time):
+        if frame_time > 10_000_000:
+            # Assume frame_time unit is nanoseconds
+            return 1_000_000_000
+        elif frame_time > 10_000:
+            # Assume frame_time unit is microseconds
+            return 1_000_000
+        else:
+            # Assume PTS is milliseconds
+            return 1_000
