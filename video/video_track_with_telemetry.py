@@ -52,6 +52,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         frame_time_now = frame.time / self.__pts_factor
         logging.info(f"FRAME: {self.__received_frames}")
         logging.info(f"Now: {frame_time_now}")
+        logging.info(f"Frame time (original): {frame.time}")
         logging.info(f"Expected: {self.__next_expected_seconds}")
         logging.info(f"Drop: {frame_time_now < self.__next_expected_seconds}")
         logging.info(f"PTS factor: {self.__pts_factor}")
