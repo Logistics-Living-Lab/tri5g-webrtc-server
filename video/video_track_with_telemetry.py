@@ -141,5 +141,5 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
             # Assume PTS is milliseconds
             return 1_000
         else:
-            # Assume PTS is centiseconds (used by Jetson)
-            return 100
+            # Assume PTS is seconds (used by Jetson)
+            return 1
