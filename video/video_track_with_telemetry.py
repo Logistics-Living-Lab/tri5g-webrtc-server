@@ -135,8 +135,11 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
             # Assume frame_time unit is nanoseconds
             return 1_000_000_000
         elif frame_time > 10_000:
-            # Assume frame_time unit is microseconds
+            # Assume frame_time unit is microseconds (used by Windows)
             return 1_000_000
-        else:
+        elif frame_time > 10:
             # Assume PTS is milliseconds
             return 1_000
+        else:
+            # Assume PTS is centiseconds (used by Jetson)
+            return 100
