@@ -6,6 +6,8 @@ import cv2
 from aiortc import MediaStreamTrack
 from av import VideoFrame
 
+from config.app_config import AppConfig
+
 
 class VideoTrackWithTelemetry(MediaStreamTrack):
     MAX_WIDTH = 1280
@@ -14,7 +16,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
     PRINT_TELEMETRY_DATA_IN_SECONDS = 10
     kind = "video"
 
-    def __init__(self, track, name, max_fps=24):
+    def __init__(self, track, name, max_fps=1):
         super().__init__()
         self.logger = logging.getLogger(__name__)
         self.track = track
@@ -61,7 +63,7 @@ class VideoTrackWithTelemetry(MediaStreamTrack):
         logging.info("#################")
 
         # If frame is too early drop
-        if frame_time_now >= self.__next_expected_seconds:
+        if AppConfig.disable_fps_limiter or frame_time_now >= self.__next_expected_seconds:
 
             # Check max size
             if frame.width > self.MAX_WIDTH or frame.height > self.MAX_HEIGHT:

@@ -440,9 +440,13 @@ def main():
     parser.add_argument("--username", help="Username", type=str)
     parser.add_argument("--password", help="password", type=str)
     parser.add_argument("--stun-server", help="STUN Server", type=str, default="stun:stun.l.google.com:19302")
+    parser.add_argument("--disable-fps-limiter", "-x", action="count", default=False)
 
     global args
     args = parser.parse_args()
+
+    AppConfig.disable_fps_limiter = args.disable_fps_limiter
+    logging.info(f"Disable FPS Limiter: {AppConfig.disable_fps_limiter}")
 
     init_app_services(args.stun_server)
     logging.info(f"Using STUN SERVER: {args.stun_server}")
